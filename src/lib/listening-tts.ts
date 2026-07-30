@@ -50,18 +50,31 @@ function isPatientRole(role: string): boolean {
   return /patient/i.test(role);
 }
 
+function sliceFromRatio(text: string, ratio: number): string {
+  const r = Math.min(1, Math.max(0, ratio));
+  if (r <= 0) return text;
+  if (r >= 1) return "";
+  let i = Math.floor(text.length * r);
+  while (i < text.length && !/\s/.test(text[i]!)) i += 1;
+  const sliced = text.slice(i).trim();
+  return sliced || text.slice(Math.floor(text.length * r)).trim();
+}
+
 /**
  * Speak dialogue with alternating clinician/patient voices.
  * Falls back to flat utterance if no turns parsed.
+ * `startRatio` (0–1) skips ahead for scrubbing/seek.
  */
 export function speakDialogueDual(
   transcript: string,
   flatFallback: string,
   handlers: { onStart?: () => void; onEnd?: () => void },
+  options?: { startRatio?: number },
 ): void {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
 
+  const startRatio = options?.startRatio ?? 0;
   const turns = parseDialogueTurns(transcript);
   const { clinician, patient } = pickVoices();
 
@@ -72,7 +85,12 @@ export function speakDialogueDual(
     const pVoice = voices.patient ?? patient;
 
     if (!turns.length) {
-      const u = new SpeechSynthesisUtterance(flatFallback);
+      const text = sliceFromRatio(flatFallback, startRatio);
+      if (!text) {
+        handlers.onEnd?.();
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(text);
       u.rate = 0.92;
       if (cVoice) u.voice = cVoice;
       u.onend = () => handlers.onEnd?.();
@@ -81,14 +99,36 @@ export function speakDialogueDual(
       return;
     }
 
+    const totalChars = turns.reduce((n, t) => n + t.text.length, 0) || 1;
+    let skipped = 0;
+    let startIdx = 0;
+    for (let i = 0; i < turns.length; i++) {
+      const next = skipped + turns[i]!.text.length;
+      if (skipped / totalChars >= startRatio) {
+        startIdx = i;
+        break;
+      }
+      if (next / totalChars > startRatio) {
+        startIdx = i;
+        break;
+      }
+      skipped = next;
+      startIdx = i + 1;
+    }
+
+    if (startIdx >= turns.length) {
+      handlers.onEnd?.();
+      return;
+    }
+
     handlers.onStart?.();
-    let i = 0;
+    let i = startIdx;
     const next = () => {
       if (i >= turns.length) {
         handlers.onEnd?.();
         return;
       }
-      const turn = turns[i++];
+      const turn = turns[i++]!;
       const u = new SpeechSynthesisUtterance(turn.text);
       u.rate = 0.92;
       if (isPatientRole(turn.role)) {
