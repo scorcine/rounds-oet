@@ -1,11 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { LISTENING_EXTRACTS } from "@/data/listening";
-import { READING_PASSAGES } from "@/data/reading";
-import { WRITING_CASES } from "@/data/writing";
-import { SPEAKING_ROLEPLAYS } from "@/data/speaking";
 import type { ExamAttempt, ExamSectionId, SectionResult } from "@/domain/exam";
 import { EXAM_SECTION_MINUTES } from "@/domain/exam";
 import {
@@ -15,11 +11,14 @@ import {
   scoreListeningAnswers,
   scoreReadingAnswers,
 } from "@/lib/exam-store";
+import { getMockExamBlueprint } from "@/data/exam-blueprint";
+import { heuristicWritingFeedback } from "@/lib/writing-feedback";
+import { heuristicSpeakingFeedback } from "@/lib/speaking-feedback";
 import { formatTime, countWords } from "@/lib/utils";
+import { percentToGradeForSkill } from "@/domain/skills";
 import { Panel } from "@/components/ui";
 import { buildExamBandReport } from "@/lib/band-report";
 import { EstimatedBandReport } from "@/components/band/EstimatedBandReport";
-import { percentToGrade } from "@/domain/skills";
 
 type Phase =
   | "intro"
@@ -36,10 +35,13 @@ function useSectionClock(running: boolean) {
     const id = window.setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => window.clearInterval(id);
   }, [running]);
-  return { elapsed, reset: () => setElapsed(0) };
+  return {
+    elapsed,
+    reset: () => setElapsed(0),
+    setElapsed,
+  };
 }
 
-/** Tracks seconds spent on the currently focused question id. */
 function useQuestionTimer(activeId: string | null, enabled: boolean) {
   const timings = useRef<Record<string, number>>({});
   const lastId = useRef<string | null>(null);
@@ -72,45 +74,60 @@ function useQuestionTimer(activeId: string | null, enabled: boolean) {
 }
 
 export function ExamMode() {
+  const blueprint = useMemo(() => getMockExamBlueprint(), []);
   const [phase, setPhase] = useState<Phase>("intro");
-  const [startedAt, setStartedAt] = useState<string>("");
+  const [startedAt, setStartedAt] = useState("");
   const [sections, setSections] = useState<SectionResult[]>([]);
   const [attempt, setAttempt] = useState<ExamAttempt | null>(null);
+  const [scoring, setScoring] = useState(false);
 
-  // Listening state
   const [listenIdx, setListenIdx] = useState(0);
   const [listenAnswers, setListenAnswers] = useState<Record<string, string>>({});
   const [activeListenQ, setActiveListenQ] = useState<string | null>(null);
+  const [listenPlays, setListenPlays] = useState<Record<string, number>>({});
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const listenClock = useSectionClock(phase === "listening");
   const listenTimings = useQuestionTimer(activeListenQ, phase === "listening");
 
-  // Reading state
   const [readIdx, setReadIdx] = useState(0);
   const [readAnswers, setReadAnswers] = useState<Record<string, number>>({});
   const [activeReadQ, setActiveReadQ] = useState<string | null>(null);
   const readClock = useSectionClock(phase === "reading");
   const readTimings = useQuestionTimer(activeReadQ, phase === "reading");
 
-  // Writing
-  const writingCase = WRITING_CASES[0];
+  const writingCase = blueprint.writing;
   const [letter, setLetter] = useState("");
   const writeClock = useSectionClock(phase === "writing");
 
-  // Speaking
-  const rolePlay = SPEAKING_ROLEPLAYS[0];
-  const [speakChecks, setSpeakChecks] = useState<Record<string, boolean>>({});
+  const [speakIdx, setSpeakIdx] = useState(0);
+  const [speakTranscripts, setSpeakTranscripts] = useState<Record<string, string>>({});
+  const [speakScores, setSpeakScores] = useState<number[]>([]);
   const speakClock = useSectionClock(phase === "speaking");
 
+  const stopAudio = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setAudioPlaying(false);
+  }, []);
+
   const startExam = () => {
+    stopAudio();
     setStartedAt(new Date().toISOString());
     setSections([]);
     setAttempt(null);
     setListenIdx(0);
     setListenAnswers({});
+    setListenPlays({});
     setReadIdx(0);
     setReadAnswers({});
     setLetter("");
-    setSpeakChecks({});
+    setSpeakIdx(0);
+    setSpeakTranscripts({});
+    setSpeakScores([]);
     listenClock.reset();
     readClock.reset();
     writeClock.reset();
@@ -118,31 +135,64 @@ export function ExamMode() {
     setPhase("listening");
   };
 
-  const finishListening = () => {
-    const scored = scoreListeningAnswers(listenAnswers, { ...listenTimings.current });
+  const finishListening = useCallback(() => {
+    stopAudio();
+    const scored = scoreListeningAnswers(
+      listenAnswers,
+      { ...listenTimings.current },
+      blueprint.listening,
+    );
     scored.section.usedSec = listenClock.elapsed;
     setSections((s) => [...s, scored.section]);
+    readClock.reset();
     setPhase("reading");
-  };
+  }, [blueprint.listening, listenAnswers, listenClock.elapsed, listenTimings, readClock, stopAudio]);
 
-  const finishReading = () => {
-    const scored = scoreReadingAnswers(readAnswers, { ...readTimings.current });
+  const finishReading = useCallback(() => {
+    const scored = scoreReadingAnswers(
+      readAnswers,
+      { ...readTimings.current },
+      blueprint.reading,
+    );
     scored.usedSec = readClock.elapsed;
+    scored.allocatedSec =
+      blueprint.readingPartASec + blueprint.readingPartBCSec;
     setSections((s) => [...s, scored]);
+    writeClock.reset();
     setPhase("writing");
-  };
+  }, [
+    blueprint.reading,
+    blueprint.readingPartASec,
+    blueprint.readingPartBCSec,
+    readAnswers,
+    readClock.elapsed,
+    readTimings,
+    writeClock,
+  ]);
 
-  const finishWriting = () => {
+  const finishWriting = useCallback(async () => {
+    setScoring(true);
+    let scorePercent = heuristicWritingFeedback(writingCase, letter).overallPercent;
+    try {
+      const res = await fetch("/api/feedback/writing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId: writingCase.id, letter }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { overallPercent?: number };
+        if (typeof data.overallPercent === "number") scorePercent = data.overallPercent;
+      }
+    } catch {
+      /* heuristic already applied */
+    }
     const words = countWords(letter);
-    const inRange =
-      words >= writingCase.wordTarget.min && words <= writingCase.wordTarget.max + 40;
-    const scorePercent = letter.trim().length < 40 ? 0 : inRange ? 75 : 55;
     const section: SectionResult = {
       skill: "writing",
       allocatedSec: EXAM_SECTION_MINUTES.writing * 60,
       usedSec: writeClock.elapsed,
       scorePercent,
-      correct: inRange ? 1 : 0,
+      correct: scorePercent >= 80 ? 1 : 0,
       total: 1,
       questionTimings: [
         {
@@ -152,37 +202,63 @@ export function ExamMode() {
           part: writingCase.taskType,
           topic: writingCase.specialty,
           secondsSpent: writeClock.elapsed,
-          correct: inRange,
-          prompt: writingCase.title,
+          correct: scorePercent >= 80,
+          prompt: `${writingCase.title} · ${words} words`,
         },
       ],
     };
     setSections((s) => [...s, section]);
+    setScoring(false);
+    speakClock.reset();
     setPhase("speaking");
-  };
+  }, [letter, speakClock, writeClock.elapsed, writingCase]);
 
-  const finishSpeaking = () => {
-    const checked = rolePlay.criteria.filter((_, i) => speakChecks[`c${i}`]).length;
-    const scorePercent = Math.round((checked / rolePlay.criteria.length) * 100);
+  const finishSpeakingRole = useCallback(async () => {
+    const rolePlay = blueprint.speaking[speakIdx];
+    if (!rolePlay) return;
+    setScoring(true);
+    const transcript = speakTranscripts[rolePlay.id] ?? "";
+    let scorePercent = heuristicSpeakingFeedback(rolePlay, transcript).overallPercent;
+    try {
+      const res = await fetch("/api/feedback/speaking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rolePlayId: rolePlay.id, transcript }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { overallPercent?: number };
+        if (typeof data.overallPercent === "number") scorePercent = data.overallPercent;
+      }
+    } catch {
+      /* heuristic */
+    }
+    const nextScores = [...speakScores, scorePercent];
+    setSpeakScores(nextScores);
+    setScoring(false);
+
+    if (speakIdx < blueprint.speaking.length - 1) {
+      setSpeakIdx((i) => i + 1);
+      return;
+    }
+
+    const avg = Math.round(nextScores.reduce((a, b) => a + b, 0) / nextScores.length);
     const speakSection: SectionResult = {
       skill: "speaking",
       allocatedSec: EXAM_SECTION_MINUTES.speaking * 60,
       usedSec: speakClock.elapsed,
-      scorePercent,
-      correct: checked,
-      total: rolePlay.criteria.length,
-      questionTimings: [
-        {
-          questionId: rolePlay.id,
-          contentId: rolePlay.id,
-          skill: "speaking",
-          part: "roleplay",
-          topic: rolePlay.specialty,
-          secondsSpent: speakClock.elapsed,
-          correct: scorePercent >= 60,
-          prompt: rolePlay.title,
-        },
-      ],
+      scorePercent: avg,
+      correct: nextScores.filter((s) => s >= 80).length,
+      total: blueprint.speaking.length,
+      questionTimings: blueprint.speaking.map((rp, i) => ({
+        questionId: rp.id,
+        contentId: rp.id,
+        skill: "speaking" as const,
+        part: "roleplay",
+        topic: rp.specialty,
+        secondsSpent: Math.round(speakClock.elapsed / blueprint.speaking.length),
+        correct: (nextScores[i] ?? 0) >= 80,
+        prompt: rp.title,
+      })),
     };
     setSections((prev) => {
       const all = [...prev, speakSection];
@@ -192,54 +268,185 @@ export function ExamMode() {
       return all;
     });
     setPhase("results");
+  }, [
+    blueprint.speaking,
+    speakClock.elapsed,
+    speakIdx,
+    speakScores,
+    speakTranscripts,
+    startedAt,
+  ]);
+
+  const playListeningAudio = (extractId: string, ttsScript: string, audioUrl?: string) => {
+    const used = listenPlays[extractId] ?? 0;
+    if (used >= blueprint.listeningPlaysPerExtract) return;
+    stopAudio();
+    setListenPlays((p) => ({ ...p, [extractId]: used + 1 }));
+
+    if (audioUrl) {
+      const el = audioRef.current;
+      if (el) {
+        el.src = audioUrl;
+        el.onended = () => setAudioPlaying(false);
+        el.onerror = () => {
+          setAudioPlaying(false);
+          const u = new SpeechSynthesisUtterance(ttsScript);
+          u.rate = 0.92;
+          u.onend = () => setAudioPlaying(false);
+          setAudioPlaying(true);
+          window.speechSynthesis.speak(u);
+        };
+        void el.play().then(() => setAudioPlaying(true)).catch(() => {
+          const u = new SpeechSynthesisUtterance(ttsScript);
+          u.rate = 0.92;
+          u.onend = () => setAudioPlaying(false);
+          setAudioPlaying(true);
+          window.speechSynthesis.speak(u);
+        });
+        return;
+      }
+    }
+    const u = new SpeechSynthesisUtterance(ttsScript);
+    u.rate = 0.92;
+    u.onend = () => setAudioPlaying(false);
+    setAudioPlaying(true);
+    window.speechSynthesis.speak(u);
   };
+
+  // Auto-finish when section time expires
+  useEffect(() => {
+    if (phase !== "listening") return;
+    const allocated = EXAM_SECTION_MINUTES.listening * 60;
+    if (listenClock.elapsed >= allocated) finishListening();
+  }, [phase, listenClock.elapsed, finishListening]);
+
+  useEffect(() => {
+    if (phase !== "reading") return;
+    const passage = blueprint.reading[readIdx];
+    if (!passage) return;
+    const allocated =
+      passage.part === "A" ? blueprint.readingPartASec : blueprint.readingPartBCSec;
+    if (readClock.elapsed < allocated) return;
+
+    if (passage.part === "A") {
+      const firstBc = blueprint.reading.findIndex((p) => p.part !== "A");
+      if (firstBc === -1) {
+        finishReading();
+        return;
+      }
+      if (readIdx < firstBc) {
+        setReadIdx(firstBc);
+        readClock.reset();
+        return;
+      }
+      // already on/after BC boundary with A clock exhausted — move to BC clock
+      if (blueprint.reading[readIdx]?.part === "A") {
+        setReadIdx(firstBc);
+        readClock.reset();
+      }
+      return;
+    }
+
+    finishReading();
+  }, [
+    phase,
+    readClock.elapsed,
+    readClock,
+    readIdx,
+    blueprint.reading,
+    blueprint.readingPartASec,
+    blueprint.readingPartBCSec,
+    finishReading,
+  ]);
+
+  useEffect(() => {
+    if (phase !== "writing") return;
+    if (writeClock.elapsed >= EXAM_SECTION_MINUTES.writing * 60 && !scoring) {
+      void finishWriting();
+    }
+  }, [phase, writeClock.elapsed, finishWriting, scoring]);
+
+  useEffect(() => {
+    if (phase !== "speaking") return;
+    if (speakClock.elapsed >= EXAM_SECTION_MINUTES.speaking * 60 && !scoring) {
+      void finishSpeakingRole();
+    }
+  }, [phase, speakClock.elapsed, finishSpeakingRole, scoring]);
 
   if (phase === "intro") {
     return (
       <Panel>
-        <h2 className="font-display text-3xl text-ink">Exam mode</h2>
+        <h2 className="font-display text-3xl text-ink">Strict mock exam</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink/65">
-          Real section timers for Listening ({EXAM_SECTION_MINUTES.listening}′), Reading (
-          {EXAM_SECTION_MINUTES.reading}′), Writing ({EXAM_SECTION_MINUTES.writing}′) and Speaking (
-          {EXAM_SECTION_MINUTES.speaking}′). We track time per question for a pacing report when you
-          finish.
+          Built for serious OET Medicine study: timed sections, limited audio plays, rubric-scored
+          writing, and two speaking role-plays from your transcript. Bands are estimated for
+          practice only — never official.
         </p>
         <ul className="mt-5 space-y-2 text-sm text-ink/70">
-          <li>· Listening & Reading are auto-scored</li>
-          <li>· Writing scored by word-target heuristic (AI rubric in Phase 3)</li>
-          <li>· Speaking uses your criterion checklist</li>
+          {blueprint.realismNotes.map((n) => (
+            <li key={n}>· {n}</li>
+          ))}
         </ul>
+        <p className="mt-4 text-xs text-ink/50">
+          When time hits zero the section auto-submits. No transcript in Listening. Target Grade B
+          (~350) is intentionally hard to reach.
+        </p>
         <button
           type="button"
           onClick={startExam}
           className="mt-8 rounded-md bg-pulse px-5 py-2.5 text-sm font-semibold text-white"
         >
-          Start full exam
+          Start strict mock
         </button>
       </Panel>
     );
   }
 
   if (phase === "listening") {
-    const extract = LISTENING_EXTRACTS[listenIdx];
+    const extract = blueprint.listening[listenIdx];
+    if (!extract) return null;
     const allocated = EXAM_SECTION_MINUTES.listening * 60;
     const remaining = Math.max(0, allocated - listenClock.elapsed);
+    const playsLeft =
+      blueprint.listeningPlaysPerExtract - (listenPlays[extract.id] ?? 0);
     return (
       <SectionShell
         skill="listening"
         title={extract.title}
-        meta={`Part ${extract.part} · ${extract.specialty} · extract ${listenIdx + 1}/${LISTENING_EXTRACTS.length}`}
+        meta={`Part ${extract.part} · ${extract.specialty} · extract ${listenIdx + 1}/${blueprint.listening.length}`}
         elapsed={listenClock.elapsed}
         remaining={remaining}
         onNext={() => {
-          if (listenIdx < LISTENING_EXTRACTS.length - 1) setListenIdx((i) => i + 1);
+          stopAudio();
+          if (listenIdx < blueprint.listening.length - 1) setListenIdx((i) => i + 1);
           else finishListening();
         }}
-        nextLabel={listenIdx < LISTENING_EXTRACTS.length - 1 ? "Next extract" : "Finish Listening"}
+        nextLabel={
+          listenIdx < blueprint.listening.length - 1 ? "Next extract" : "Finish Listening"
+        }
+        locked={scoring}
       >
-        <p className="mb-4 text-sm text-ink/60">
-          Answer while working — focus a question to attribute pacing time.
-        </p>
+        <audio ref={audioRef} className="hidden" preload="none" />
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={playsLeft <= 0 || audioPlaying}
+            onClick={() =>
+              playListeningAudio(extract.id, extract.ttsScript, extract.audioUrl)
+            }
+            className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-40"
+          >
+            {audioPlaying
+              ? "Playing…"
+              : playsLeft > 0
+                ? `Play audio (${playsLeft} left)`
+                : "No plays left"}
+          </button>
+          <p className="text-sm text-ink/55">
+            Listen first — no transcript in exam mode. Max {blueprint.listeningPlaysPerExtract}{" "}
+            plays per extract.
+          </p>
+        </div>
         <div className="space-y-3">
           {extract.questions.map((q, qi) => (
             <div
@@ -280,22 +487,31 @@ export function ExamMode() {
   }
 
   if (phase === "reading") {
-    const passage = READING_PASSAGES[readIdx];
-    const allocated = EXAM_SECTION_MINUTES.reading * 60;
+    const passage = blueprint.reading[readIdx];
+    if (!passage) return null;
+    const allocated =
+      passage.part === "A" ? blueprint.readingPartASec : blueprint.readingPartBCSec;
     const remaining = Math.max(0, allocated - readClock.elapsed);
     return (
       <SectionShell
         skill="reading"
         title={passage.title}
-        meta={`Part ${passage.part} · ${passage.specialty} · ${readIdx + 1}/${READING_PASSAGES.length}`}
+        meta={`Part ${passage.part} clock · ${passage.specialty} · ${readIdx + 1}/${blueprint.reading.length}`}
         elapsed={readClock.elapsed}
         remaining={remaining}
         onNext={() => {
-          if (readIdx < READING_PASSAGES.length - 1) setReadIdx((i) => i + 1);
-          else finishReading();
+          if (readIdx < blueprint.reading.length - 1) {
+            const next = blueprint.reading[readIdx + 1];
+            if (passage.part === "A" && next.part !== "A") readClock.reset();
+            setReadIdx((i) => i + 1);
+          } else finishReading();
         }}
-        nextLabel={readIdx < READING_PASSAGES.length - 1 ? "Next passage" : "Finish Reading"}
+        nextLabel={readIdx < blueprint.reading.length - 1 ? "Next passage" : "Finish Reading"}
       >
+        <p className="mb-3 text-xs text-ink/50">
+          Part A uses a separate {blueprint.readingPartASec / 60}′ clock (expeditious pace). Parts
+          B/C share {blueprint.readingPartBCSec / 60}′.
+        </p>
         <div className="grid gap-4 lg:grid-cols-2">
           <pre className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-xl bg-scrub/60 p-4 font-sans text-sm leading-relaxed text-ink/80">
             {passage.text}
@@ -342,19 +558,31 @@ export function ExamMode() {
         meta={`${writingCase.taskType} · target ${writingCase.wordTarget.min}–${writingCase.wordTarget.max} words · ${words} now`}
         elapsed={writeClock.elapsed}
         remaining={remaining}
-        onNext={finishWriting}
-        nextLabel="Finish Writing"
+        onNext={() => void finishWriting()}
+        nextLabel={scoring ? "Scoring letter…" : "Finish Writing"}
+        locked={scoring}
       >
+        <p className="mb-3 text-xs text-ink/50">
+          Scored on Purpose, Content, Conciseness, Genre, Organisation, Language — strict study
+          rubric (AI when available).
+        </p>
         <div className="grid gap-4 lg:grid-cols-2">
-          <pre className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-xl bg-scrub/60 p-4 font-sans text-sm text-ink/80">
-            {writingCase.caseNotes}
-          </pre>
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-ward">
+              Task
+            </p>
+            <p className="mb-3 text-sm text-ink/70">{writingCase.task}</p>
+            <pre className="max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-xl bg-scrub/60 p-4 font-sans text-sm text-ink/80">
+              {writingCase.caseNotes}
+            </pre>
+          </div>
           <textarea
             value={letter}
             onChange={(e) => setLetter(e.target.value)}
             rows={18}
-            className="w-full rounded-xl border border-ink/15 p-3 text-sm leading-relaxed"
-            placeholder="Write your letter…"
+            disabled={scoring}
+            className="w-full rounded-xl border border-ink/15 p-3 text-sm leading-relaxed disabled:opacity-60"
+            placeholder="Write your professional letter…"
           />
         </div>
       </SectionShell>
@@ -362,57 +590,69 @@ export function ExamMode() {
   }
 
   if (phase === "speaking") {
+    const rolePlay = blueprint.speaking[speakIdx];
+    if (!rolePlay) return null;
     const allocated = EXAM_SECTION_MINUTES.speaking * 60;
     const remaining = Math.max(0, allocated - speakClock.elapsed);
+    const transcript = speakTranscripts[rolePlay.id] ?? "";
     return (
       <SectionShell
         skill="speaking"
         title={rolePlay.title}
-        meta={`${rolePlay.setting} · ${rolePlay.specialty}`}
+        meta={`Role-play ${speakIdx + 1}/${blueprint.speaking.length} · ${rolePlay.setting}`}
         elapsed={speakClock.elapsed}
         remaining={remaining}
-        onNext={finishSpeaking}
-        nextLabel="Finish exam"
+        onNext={() => void finishSpeakingRole()}
+        nextLabel={
+          scoring
+            ? "Scoring…"
+            : speakIdx < blueprint.speaking.length - 1
+              ? "Score & next role-play"
+              : "Score & finish exam"
+        }
+        locked={scoring}
       >
+        <p className="mb-3 text-xs text-ink/50">
+          Speak aloud as the professional, then paste (or type) what you said. Scored on
+          Intelligibility, Fluency, Appropriateness, Resources — checklist alone is not enough.
+        </p>
         <pre className="whitespace-pre-wrap rounded-xl bg-scrub/60 p-4 font-sans text-sm text-ink/80">
           {rolePlay.candidateCard}
         </pre>
-        <Panel className="mt-4">
-          <h3 className="font-display text-xl text-ink">Self-assessment</h3>
-          <ul className="mt-3 space-y-2">
-            {rolePlay.criteria.map((c, i) => (
-              <label key={c} className="flex gap-2 text-sm text-ink/80">
-                <input
-                  type="checkbox"
-                  checked={!!speakChecks[`c${i}`]}
-                  onChange={(e) =>
-                    setSpeakChecks((x) => ({ ...x, [`c${i}`]: e.target.checked }))
-                  }
-                />
-                {c}
-              </label>
-            ))}
-          </ul>
-        </Panel>
+        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-ward">
+          Interlocutor notes (for practice partner / self)
+        </p>
+        <pre className="mt-2 whitespace-pre-wrap rounded-xl border border-ink/10 p-4 font-sans text-sm text-ink/70">
+          {rolePlay.interlocutorCard}
+        </pre>
+        <label className="mt-4 block text-sm font-semibold text-ink">
+          Your spoken sample (transcript)
+          <textarea
+            value={transcript}
+            onChange={(e) =>
+              setSpeakTranscripts((t) => ({ ...t, [rolePlay.id]: e.target.value }))
+            }
+            rows={8}
+            disabled={scoring}
+            className="mt-2 w-full rounded-xl border border-ink/15 p-3 text-sm leading-relaxed disabled:opacity-60"
+            placeholder="Paste what you said in the role-play (≥ ~80–120 words for a fair score)…"
+          />
+        </label>
       </SectionShell>
     );
   }
 
-  // results
   if (!attempt) return null;
   const bandReport = buildExamBandReport(attempt, "B");
   return (
     <div className="space-y-6">
-      <EstimatedBandReport
-        report={bandReport}
-        title="Estimated OET band · this mock"
-      />
+      <EstimatedBandReport report={bandReport} title="Estimated OET band · this mock" />
 
       <Panel className="bg-ink text-paper">
-        <p className="text-xs uppercase tracking-[0.2em] text-scrub/80">Exam complete</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-scrub/80">Strict mock complete</p>
         <p className="mt-2 font-display text-5xl">{attempt.overallPercent}%</p>
         <p className="mt-2 text-sm text-paper/65">
-          Avg {attempt.pacing.avgSecPerQuestion}s per scored question
+          Avg {attempt.pacing.avgSecPerQuestion}s per scored question · study estimate only
         </p>
       </Panel>
 
@@ -426,7 +666,7 @@ export function ExamMode() {
             <p className="mt-1 text-sm text-ink/55">
               {s.scorePercent == null
                 ? "Unscored"
-                : `Est. ${percentToGrade(s.scorePercent)} · not official`}
+                : `Est. ${percentToGradeForSkill(s.scorePercent, s.skill)} · not official`}
             </p>
             <p className="mt-1 text-sm text-ink/55">
               {formatTime(s.usedSec)} used / {formatTime(s.allocatedSec)} ·{" "}
@@ -510,6 +750,7 @@ function SectionShell({
   onNext,
   nextLabel,
   children,
+  locked = false,
 }: {
   skill: ExamSectionId;
   title: string;
@@ -519,6 +760,7 @@ function SectionShell({
   onNext: () => void;
   nextLabel: string;
   children: React.ReactNode;
+  locked?: boolean;
 }) {
   const warn = remaining < 5 * 60;
   return (
@@ -527,14 +769,16 @@ function SectionShell({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ward">
-              Exam · {skill}
+              Strict mock · {skill}
             </p>
             <p className="font-display text-xl text-ink">{title}</p>
             <p className="text-xs text-ink/50">{meta}</p>
           </div>
           <div className="flex items-center gap-3 font-mono text-sm">
             <span className="text-ink/50">used {formatTime(elapsed)}</span>
-            <span className={`rounded-md px-2.5 py-1 ${warn ? "bg-pulse/15 text-pulse" : "bg-ink/5 text-ink"}`}>
+            <span
+              className={`rounded-md px-2.5 py-1 ${warn ? "bg-pulse/15 text-pulse" : "bg-ink/5 text-ink"}`}
+            >
               {formatTime(remaining)} left
             </span>
           </div>
@@ -544,7 +788,8 @@ function SectionShell({
       <button
         type="button"
         onClick={onNext}
-        className="rounded-md bg-pulse px-5 py-2.5 text-sm font-semibold text-white"
+        disabled={locked}
+        className="rounded-md bg-pulse px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
       >
         {nextLabel}
       </button>

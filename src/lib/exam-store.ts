@@ -64,13 +64,14 @@ export function buildPacing(sections: SectionResult[]): PacingReport {
 export function scoreListeningAnswers(
   answers: Record<string, string>,
   timings: Record<string, number>,
+  extracts: typeof LISTENING_EXTRACTS = LISTENING_EXTRACTS,
 ): { section: SectionResult; byPart: Record<string, { correct: number; total: number }> } {
   const questionTimings: QuestionTiming[] = [];
   const byPart: Record<string, { correct: number; total: number }> = {};
   let correct = 0;
   let total = 0;
 
-  for (const extract of LISTENING_EXTRACTS) {
+  for (const extract of extracts) {
     byPart[extract.part] ??= { correct: 0, total: 0 };
     for (const q of extract.questions) {
       total += 1;
@@ -116,12 +117,13 @@ export function scoreListeningAnswers(
 export function scoreReadingAnswers(
   answers: Record<string, number>,
   timings: Record<string, number>,
+  passages: typeof READING_PASSAGES = READING_PASSAGES,
 ): SectionResult {
   const questionTimings: QuestionTiming[] = [];
   let correct = 0;
   let total = 0;
 
-  for (const passage of READING_PASSAGES) {
+  for (const passage of passages) {
     for (const q of passage.questions) {
       total += 1;
       const ok = answers[q.id] === q.correctIndex;

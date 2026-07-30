@@ -59,40 +59,54 @@ export const GRADE_SCORE_RANGE: Record<
 };
 
 /**
- * Practice % → estimated grade.
- * Calibrated conservatively toward Medicine registration targets (often Grade B / ~350).
- * Not an official OET conversion — forms are equated and cut-scores are not published as %.
+ * Practice % → estimated grade (strict / study-oriented).
+ * Tuned so Grade B is earned, not gifted — many Medicine boards need ~350 (B) in each skill.
+ * Official OET does not publish % cut-scores; this is a conservative study heuristic only.
  */
 export function percentToGrade(percent: number): OetGrade {
   const p = Math.max(0, Math.min(100, percent));
-  if (p >= 88) return "A";
-  if (p >= 75) return "B";
-  if (p >= 65) return "C+";
-  if (p >= 55) return "C";
-  if (p >= 40) return "D";
+  if (p >= 92) return "A";
+  if (p >= 80) return "B";
+  if (p >= 70) return "C+";
+  if (p >= 58) return "C";
+  if (p >= 42) return "D";
   return "E";
 }
 
+/** Slightly stricter curve for Listening/Reading objective papers. */
+export function percentToGradeForSkill(percent: number, skill: Skill): OetGrade {
+  if (skill === "listening" || skill === "reading") {
+    const p = Math.max(0, Math.min(100, percent));
+    if (p >= 93) return "A";
+    if (p >= 82) return "B";
+    if (p >= 72) return "C+";
+    if (p >= 60) return "C";
+    if (p >= 45) return "D";
+    return "E";
+  }
+  return percentToGrade(percent);
+}
+
 /** Map practice % into an approximate 0–500 score inside the estimated grade band. */
-export function percentToScore(percent: number): number {
+export function percentToScore(percent: number, skill?: Skill): number {
   const p = Math.max(0, Math.min(100, percent));
-  const grade = percentToGrade(p);
+  const grade = skill ? percentToGradeForSkill(p, skill) : percentToGrade(p);
   const { min, max } = GRADE_SCORE_RANGE[grade];
   const floors: Record<OetGrade, number> = {
-    A: 88,
-    B: 75,
-    "C+": 65,
-    C: 55,
-    D: 40,
+    A: skill === "listening" || skill === "reading" ? 93 : 92,
+    B: skill === "listening" || skill === "reading" ? 82 : 80,
+    "C+": skill === "listening" || skill === "reading" ? 72 : 70,
+    C: skill === "listening" || skill === "reading" ? 60 : 58,
+    D: skill === "listening" || skill === "reading" ? 45 : 42,
     E: 0,
   };
   const ceilings: Record<OetGrade, number> = {
     A: 100,
-    B: 88,
-    "C+": 75,
-    C: 65,
-    D: 55,
-    E: 40,
+    B: floors.A,
+    "C+": floors.B,
+    C: floors["C+"],
+    D: floors.C,
+    E: floors.D,
   };
   const lo = floors[grade];
   const hi = ceilings[grade];
@@ -117,7 +131,6 @@ export function gradeDescriptor(grade: OetGrade): string {
   return map[grade];
 }
 
-/** Grade order for comparisons (higher index = stronger). */
 export const GRADE_RANK: Record<OetGrade, number> = {
   E: 0,
   D: 1,
@@ -129,9 +142,7 @@ export const GRADE_RANK: Record<OetGrade, number> = {
 
 export function minGrade(grades: OetGrade[]): OetGrade | null {
   if (!grades.length) return null;
-  return grades.reduce((worst, g) =>
-    GRADE_RANK[g] < GRADE_RANK[worst] ? g : worst,
-  );
+  return grades.reduce((worst, g) => (GRADE_RANK[g] < GRADE_RANK[worst] ? g : worst));
 }
 
 export function meetsTarget(estimated: OetGrade, target: OetGrade): boolean {
@@ -139,7 +150,7 @@ export function meetsTarget(estimated: OetGrade, target: OetGrade): boolean {
 }
 
 export const ESTIMATED_BAND_DISCLAIMER =
-  "Estimated practice band only — not an official OET result. Only the official OET test can award grades A–E.";
+  "Estimated practice band for study only — not an official OET result. Official grades are awarded solely by OET after the live test.";
 
 export function normalizeAnswer(value: string): string {
   return value

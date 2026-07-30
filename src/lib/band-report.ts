@@ -6,7 +6,7 @@ import {
   gradeLabel,
   meetsTarget,
   minGrade,
-  percentToGrade,
+  percentToGradeForSkill,
   percentToScore,
 } from "@/domain/skills";
 import { skillStats } from "@/lib/progress";
@@ -65,8 +65,8 @@ export function buildPracticeBandReport(
   const skills: SkillBandEstimate[] = SKILLS.map((skill) => {
     const stats = skillStats(progress, skill);
     const percent = recentSkillPercent(progress, skill);
-    const grade = percent == null ? null : percentToGrade(percent);
-    const score = percent == null ? null : percentToScore(percent);
+    const grade = percent == null ? null : percentToGradeForSkill(percent, skill);
+    const score = percent == null ? null : percentToScore(percent, skill);
     return {
       skill,
       label: SKILL_META[skill].label,
@@ -115,8 +115,8 @@ export function buildPracticeBandReport(
     skills,
     sampleNote:
       graded.length < 4
-        ? "Complete attempts in all four skills for a fuller estimate."
-        : "Overall estimate uses your weakest skill (registration-style).",
+        ? "Complete attempts in all four skills for a fuller estimate. Scoring is deliberately strict for study."
+        : "Overall uses your weakest skill (registration-style). Bands are strict study estimates only.",
   };
 }
 
@@ -132,8 +132,8 @@ export function buildExamBandReport(
   const skills: SkillBandEstimate[] = SKILLS.map((skill) => {
     const section = bySkill.get(skill);
     const percent = section?.scorePercent ?? null;
-    const grade = percent == null ? null : percentToGrade(percent);
-    const score = percent == null ? null : percentToScore(percent);
+    const grade = percent == null ? null : percentToGradeForSkill(percent, skill);
+    const score = percent == null ? null : percentToScore(percent, skill);
     return {
       skill,
       label: SKILL_META[skill].label,
@@ -170,6 +170,7 @@ export function buildExamBandReport(
     targetGrade,
     onTrackForTarget: overallGrade ? meetsTarget(overallGrade, targetGrade) : null,
     skills,
-    sampleNote: "Based on this mock only — official OET uses equated scoring.",
+    sampleNote:
+      "Scaled mock scored strictly for study. Official OET uses equated 42-item papers and live assessors.",
   };
 }

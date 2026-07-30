@@ -17,8 +17,9 @@ async function aiSpeakingFeedback(
   const rolePlay = SPEAKING_ROLEPLAYS.find((r) => r.id === rolePlayId);
   if (!rolePlay) return null;
 
-  const prompt = `You are an OET Medicine Speaking assessor.
-Score the candidate transcript on Intelligibility, Fluency, Appropriateness, Resources.
+  const prompt = `You are a strict OET Medicine Speaking assessor preparing a candidate for the real test.
+Score Intelligibility, Fluency, Appropriateness, Resources. Be criterious: Grade B needs clear clinical communication, controlled fluency, appropriate professional functions (explain, check understanding, plan, safety-net), and adequate linguistic range.
+Short or vague transcripts must score low. Do NOT inflate.
 Return ONLY JSON:
 {
   "overallPercent": number,
@@ -50,7 +51,7 @@ ${transcript}`;
         temperature: 0.3,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: "OET speaking assessor. JSON only." },
+          { role: "system", content: "Strict OET speaking assessor for study. Do not inflate scores. JSON only." },
           { role: "user", content: prompt },
         ],
       }),

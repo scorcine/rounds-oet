@@ -21,7 +21,9 @@ async function aiWritingFeedback(
     .map((r) => `- ${r.criterion}: ${r.description}`)
     .join("\n");
 
-  const prompt = `You are an OET Medicine Writing examiner. Score this letter.
+  const prompt = `You are a strict OET Medicine Writing examiner preparing a candidate for the real test.
+Be criterious: Grade B (~350) requires clear purpose, almost all relevant case-note content, letter genre, organisation, and controlled language. Do NOT inflate scores.
+Missing key clinical facts, note/bullet style, absent request, or frequent grammar errors must lower Content/Genre/Language substantially.
 Return ONLY valid JSON with shape:
 {
   "overallPercent": number,
@@ -56,7 +58,7 @@ ${letter}`;
         temperature: 0.3,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: "OET writing examiner. JSON only." },
+          { role: "system", content: "Strict OET writing examiner for study. Do not inflate scores. JSON only." },
           { role: "user", content: prompt },
         ],
       }),

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Skill, UserProgress } from "@/domain/types";
 import type { StudyState } from "@/domain/study";
-import { SKILL_META, percentToGrade, gradeLabel } from "@/domain/skills";
+import { SKILL_META, percentToGradeForSkill, gradeLabel } from "@/domain/skills";
 import { DEFAULT_PROGRESS, loadProgress, overallReadiness, skillStats } from "@/lib/progress";
 import { DEFAULT_STUDY, loadStudy, getDueQueue, dailyRemaining } from "@/lib/study-store";
 import { buildPracticeBandReport } from "@/lib/band-report";
@@ -32,7 +32,7 @@ export default function ProgressPage() {
       <PageHero
         eyebrow="Progress"
         title="Your practice pulse"
-        description="Estimated bands from your attempts — useful for study planning, not an official OET result."
+        description="Strict study estimates from your attempts — useful for planning, never an official OET result."
       />
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-12 sm:px-6">
         <EstimatedBandReport report={bandReport} title="Estimated OET band" />
@@ -103,7 +103,8 @@ export default function ProgressPage() {
                   <div>
                     <dt className="text-ink/50">Est. band</dt>
                     <dd className="text-lg font-semibold text-ink">
-                      {band?.grade ?? (stats.best == null ? "—" : percentToGrade(stats.best))}
+                      {band?.grade ??
+                        (stats.best == null ? "—" : percentToGradeForSkill(stats.best, skill))}
                     </dd>
                   </div>
                 </dl>
@@ -135,7 +136,9 @@ export default function ProgressPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-mono text-ink">{a.scorePercent}%</p>
-                    <p className="text-xs text-ink/45">≈ {percentToGrade(a.scorePercent)}</p>
+                    <p className="text-xs text-ink/45">
+                      ≈ {percentToGradeForSkill(a.scorePercent, a.skill)}
+                    </p>
                   </div>
                 </li>
               ))}
