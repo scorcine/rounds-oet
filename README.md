@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rounds — OET Medicine
 
-## Getting Started
+Web-first preparation app for the Occupational English Test (Medicine), structured so the same domain models and content can later power a mobile app (React Native / Expo).
 
-First, run the development server:
+## Run
 
 ```bash
+cd web
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What's included
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Listening** — Parts A/B/C with TTS audio, gap + MCQ, scoring
+- **Reading** — Parts A/B/C timed passages
+- **Writing** — case notes → letter, word count, rubric, sample
+- **Speaking** — role-play cards, mic recording, self-assessment
+- **Vocabulary** — clinical deck with mastered flags
+- **Mock** — ordered full-set pathway
+- **Progress** — localStorage attempts, streak, readiness
 
-## Learn More
+## Mobile-ready layout
 
-To learn more about Next.js, take a look at the following resources:
+| Path | Role |
+|------|------|
+| `src/domain/` | Shared types & scoring (portable) |
+| `src/data/` | Curriculum content (portable) |
+| `src/lib/progress.ts` | Storage adapter (swap for API) |
+| `src/components/` | Web UI |
+| `src/app/` | Next.js routes |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Disclaimer
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Original practice materials only. Not affiliated with official OET.

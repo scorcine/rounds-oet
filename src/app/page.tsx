@@ -1,65 +1,91 @@
-import Image from "next/image";
+import Link from "next/link";
+import { SKILL_META } from "@/domain/skills";
+import { SkillCard } from "@/components/ui";
 
-export default function Home() {
+const skills = Object.entries(SKILL_META);
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div>
+      <section className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden ward-grid">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(26,95,106,0.22),transparent_50%),radial-gradient(ellipse_at_90%_10%,rgba(232,93,76,0.16),transparent_40%),linear-gradient(180deg,#dceeea_0%,#f4f8f7_55%,#f4f8f7_100%)]" />
+        <div className="pointer-events-none absolute -right-24 top-24 h-[28rem] w-[28rem] rounded-full bg-ward/20 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-paper to-transparent" />
+
+        <div className="relative mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-6xl flex-col justify-center px-4 py-16 sm:px-6">
+          <p className="animate-rise text-xs font-semibold uppercase tracking-[0.28em] text-ward">
+            OET Medicine
+          </p>
+          <h1 className="animate-rise mt-4 max-w-3xl font-display text-6xl leading-[0.95] tracking-tight text-ink sm:text-7xl md:text-8xl">
+            Rounds
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+          <p
+            className="animate-rise mt-6 max-w-xl text-lg leading-relaxed text-ink/70 sm:text-xl"
+            style={{ animationDelay: "80ms" }}
+          >
+            Clinical English practice for doctors — Listening, Reading, Writing and Speaking in one
+            web app, ready to grow into mobile.
+          </p>
+          <div
+            className="animate-rise mt-10 flex flex-wrap gap-3"
+            style={{ animationDelay: "140ms" }}
+          >
+            <Link
+              href="/practice"
+              className="rounded-md bg-pulse px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_-12px_rgba(232,93,76,0.8)] transition hover:bg-pulse/90"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Enter practice
+            </Link>
+            <Link
+              href="/mock"
+              className="rounded-md border border-ink/20 bg-paper/70 px-6 py-3 text-sm font-semibold text-ink backdrop-blur transition hover:border-ink/40"
             >
-              Learning
-            </a>{" "}
-            center.
+              Full mock set
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ward">Four skills</p>
+          <h2 className="mt-3 font-display text-4xl text-ink">Train the whole exam</h2>
+          <p className="mt-3 text-ink/65">
+            Each module mirrors exam timing and task types, with progress saved on this device.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          {skills.map(([key, meta], i) => (
+            <SkillCard
+              key={key}
+              href={meta.href}
+              title={meta.label}
+              blurb={meta.blurb}
+              meta={`${meta.examMinutes} min exam`}
+              index={i}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          ))}
         </div>
-      </main>
+      </section>
+
+      <section className="border-y border-ink/10 bg-ink text-paper">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1.2fr_1fr]">
+          <div>
+            <h2 className="font-display text-4xl">Built web-first</h2>
+            <p className="mt-4 max-w-lg text-paper/70">
+              Domain models and content live outside the UI layer, so the same Listening cases,
+              Writing rubrics and Speaking cards can power a future React Native app without
+              rewriting the curriculum.
+            </p>
+          </div>
+          <ul className="space-y-4 text-sm text-paper/75">
+            <li className="border-l-2 border-pulse pl-4">Timed practice + mock pathway</li>
+            <li className="border-l-2 border-ward pl-4">Writing rubrics & sample letters</li>
+            <li className="border-l-2 border-amber pl-4">Speaking recording + self-assessment</li>
+            <li className="border-l-2 border-scrub pl-4">Clinical vocabulary deck</li>
+          </ul>
+        </div>
+      </section>
     </div>
   );
 }
