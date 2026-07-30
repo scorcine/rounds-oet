@@ -157,8 +157,9 @@ export function AccountPanel() {
       if (readError) throw readError;
 
       let merged: SyncPayload = local;
-      if (row?.payload) {
-        merged = mergePayloads(local, row.payload as SyncPayload);
+      const remotePayload = (row as { payload?: SyncPayload } | null)?.payload;
+      if (remotePayload) {
+        merged = mergePayloads(local, remotePayload);
       }
       merged.displayName = displayName;
       merged.badgesUnlocked = evaluateBadges(merged);
