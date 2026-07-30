@@ -50,6 +50,29 @@ export default function HomePage() {
 
       <StudyPath />
 
+      <section className="relative overflow-hidden border-y border-ink/10 bg-ink px-4 py-16 text-paper sm:px-6">
+        <div className="pointer-events-none absolute inset-0 tech-grid-dense opacity-40" />
+        <div className="relative mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-xl">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-ward">
+              General English · CEFR
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-bold md:text-5xl">
+              English Path A1–A2
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-paper/55 sm:text-base">
+              20 short lessons with Portuguese glosses — foundations first, then OET Medicine.
+            </p>
+          </div>
+          <Link
+            href="/english"
+            className="inline-flex w-fit rounded-md bg-pulse px-5 py-3 text-sm font-bold text-white transition hover:brightness-110"
+          >
+            Open English Path →
+          </Link>
+        </div>
+      </section>
+
       <section className="relative overflow-hidden bg-paper px-4 py-20 sm:px-6">
         <div className="pointer-events-none absolute inset-0 tech-grid opacity-40" />
         <div className="relative mx-auto max-w-6xl">
