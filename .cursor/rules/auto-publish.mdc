@@ -1,0 +1,14 @@
+---
+description: Always commit and push after meaningful app changes
+alwaysApply: true
+---
+
+# Auto git publish
+
+After completing a meaningful set of code changes in this project:
+
+1. Commit with a clear message (why over what).
+2. Push to `origin` on the current branch so Vercel redeploys.
+3. Do this without asking for confirmation each time.
+
+Still never force-push, never amend published history unless explicitly requested, and never commit secrets (`.env`, credentials).
