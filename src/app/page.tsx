@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SKILL_META } from "@/domain/skills";
 import { SkillCard } from "@/components/ui";
+import { StudyPath } from "@/components/home/StudyPath";
 
 const skills = Object.entries(SKILL_META);
 
@@ -46,6 +47,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <StudyPath />
 
       <section className="relative overflow-hidden bg-paper px-4 py-20 sm:px-6">
         <div className="pointer-events-none absolute inset-0 tech-grid opacity-40" />

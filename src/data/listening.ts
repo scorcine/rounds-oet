@@ -4,6 +4,8 @@ import { LISTENING_EXTRACTS_BANK2 } from "./listening-bank2";
 import { LISTENING_EXTRACTS_FULLPAPER } from "./listening-fullpaper";
 import { LISTENING_EXTRACTS_FULLPAPER_2 } from "./listening-fullpaper-2";
 import { LISTENING_EXTRACTS_FULLPAPER_3 } from "./listening-fullpaper-3";
+import { LISTENING_EXTRACTS_FULLPAPER_4 } from "./listening-fullpaper-4";
+import { LISTENING_EXTRACTS_FULLPAPER_5 } from "./listening-fullpaper-5";
 
 const LISTENING_EXTRACTS_BASE: ListeningExtract[] = [
   {
@@ -136,4 +138,6 @@ export const LISTENING_EXTRACTS: ListeningExtract[] = [
   ...LISTENING_EXTRACTS_FULLPAPER,
   ...LISTENING_EXTRACTS_FULLPAPER_2,
   ...LISTENING_EXTRACTS_FULLPAPER_3,
+  ...LISTENING_EXTRACTS_FULLPAPER_4,
+  ...LISTENING_EXTRACTS_FULLPAPER_5,
 ];

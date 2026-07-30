@@ -6,6 +6,7 @@ import { answersMatch } from "@/domain/skills";
 import { recordAttempt } from "@/lib/progress";
 import { useCountdown, TimerBadge } from "@/components/Timer";
 import { Panel } from "@/components/ui";
+import { speakDialogueDual } from "@/lib/listening-tts";
 
 function isChoice(q: ChoiceQuestion | GapQuestion): q is ChoiceQuestion {
   return "options" in q;
@@ -31,12 +32,10 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
 
   const speakTts = () => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(extract.ttsScript);
-    u.rate = 0.92;
-    u.onend = () => setPlaying(false);
-    setPlaying(true);
-    window.speechSynthesis.speak(u);
+    speakDialogueDual(extract.transcript, extract.ttsScript, {
+      onStart: () => setPlaying(true),
+      onEnd: () => setPlaying(false),
+    });
   };
 
   const play = () => {

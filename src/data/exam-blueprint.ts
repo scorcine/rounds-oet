@@ -9,7 +9,7 @@ import type {
   SpeakingRolePlay,
 } from "@/domain/types";
 
-export type ExamPaperId = 1 | 2 | 3;
+export type ExamPaperId = 1 | 2 | 3 | 4 | 5;
 
 const PAPER_SETS: Record<
   ExamPaperId,
@@ -96,18 +96,76 @@ const PAPER_SETS: Record<
       "read-fc3-2",
     ],
   },
+  4: {
+    label: "Paper 4",
+    theme: "GI bleed · cholangitis / hepatobiliary",
+    listening: [
+      "lis-fa4-1",
+      "lis-fa4-2",
+      "lis-fb4-1",
+      "lis-fb4-2",
+      "lis-fb4-3",
+      "lis-fb4-4",
+      "lis-fb4-5",
+      "lis-fb4-6",
+      "lis-fc4-1",
+      "lis-fc4-2",
+    ],
+    reading: [
+      "read-fa4-1",
+      "read-fb4-1",
+      "read-fb4-2",
+      "read-fb4-3",
+      "read-fb4-4",
+      "read-fb4-5",
+      "read-fb4-6",
+      "read-fc4-1",
+      "read-fc4-2",
+    ],
+  },
+  5: {
+    label: "Paper 5",
+    theme: "DKA · hypoglycaemia · diabetic foot",
+    listening: [
+      "lis-fa5-1",
+      "lis-fa5-2",
+      "lis-fb5-1",
+      "lis-fb5-2",
+      "lis-fb5-3",
+      "lis-fb5-4",
+      "lis-fb5-5",
+      "lis-fb5-6",
+      "lis-fc5-1",
+      "lis-fc5-2",
+    ],
+    reading: [
+      "read-fa5-1",
+      "read-fb5-1",
+      "read-fb5-2",
+      "read-fb5-3",
+      "read-fb5-4",
+      "read-fb5-5",
+      "read-fb5-6",
+      "read-fc5-1",
+      "read-fc5-2",
+    ],
+  },
 };
 
 const WRITING_BY_PAPER: Record<ExamPaperId, string> = {
   1: "writ-1",
   2: "writ-3",
   3: "writ-6",
+  4: "writ-2",
+  5: "writ-4",
 };
 
 const SPEAKING_BY_PAPER: Record<ExamPaperId, readonly string[]> = {
   1: ["spk-1", "spk-2"],
   2: ["spk-4", "spk-8"],
   3: ["spk-10", "spk-11"],
+  4: ["spk-3", "spk-5"],
+  5: ["spk-6", "spk-7"],
 };
 
 export const OFFICIAL_TARGETS = {

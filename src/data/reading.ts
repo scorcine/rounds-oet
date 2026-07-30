@@ -3,6 +3,8 @@ import { READING_PASSAGES_EXTRA } from "./reading-extra";
 import { READING_PASSAGES_FULLPAPER } from "./reading-fullpaper";
 import { READING_PASSAGES_FULLPAPER_2 } from "./reading-fullpaper-2";
 import { READING_PASSAGES_FULLPAPER_3 } from "./reading-fullpaper-3";
+import { READING_PASSAGES_FULLPAPER_4 } from "./reading-fullpaper-4";
+import { READING_PASSAGES_FULLPAPER_5 } from "./reading-fullpaper-5";
 
 const READING_PASSAGES_BASE: ReadingPassage[] = [
   {
@@ -127,4 +129,6 @@ export const READING_PASSAGES: ReadingPassage[] = [
   ...READING_PASSAGES_FULLPAPER,
   ...READING_PASSAGES_FULLPAPER_2,
   ...READING_PASSAGES_FULLPAPER_3,
+  ...READING_PASSAGES_FULLPAPER_4,
+  ...READING_PASSAGES_FULLPAPER_5,
 ];

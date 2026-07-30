@@ -19,6 +19,7 @@ import { percentToGradeForSkill } from "@/domain/skills";
 import { Panel } from "@/components/ui";
 import { buildExamBandReport } from "@/lib/band-report";
 import { EstimatedBandReport } from "@/components/band/EstimatedBandReport";
+import { speakDialogueDual } from "@/lib/listening-tts";
 
 type Phase =
   | "intro"
@@ -278,11 +279,23 @@ export function ExamMode() {
     startedAt,
   ]);
 
-  const playListeningAudio = (extractId: string, ttsScript: string, audioUrl?: string) => {
+  const playListeningAudio = (
+    extractId: string,
+    transcript: string,
+    ttsScript: string,
+    audioUrl?: string,
+  ) => {
     const used = listenPlays[extractId] ?? 0;
     if (used >= blueprint.listeningPlaysPerExtract) return;
     stopAudio();
     setListenPlays((p) => ({ ...p, [extractId]: used + 1 }));
+
+    const speakTts = () => {
+      speakDialogueDual(transcript, ttsScript, {
+        onStart: () => setAudioPlaying(true),
+        onEnd: () => setAudioPlaying(false),
+      });
+    };
 
     if (audioUrl) {
       const el = audioRef.current;
@@ -291,27 +304,13 @@ export function ExamMode() {
         el.onended = () => setAudioPlaying(false);
         el.onerror = () => {
           setAudioPlaying(false);
-          const u = new SpeechSynthesisUtterance(ttsScript);
-          u.rate = 0.92;
-          u.onend = () => setAudioPlaying(false);
-          setAudioPlaying(true);
-          window.speechSynthesis.speak(u);
+          speakTts();
         };
-        void el.play().then(() => setAudioPlaying(true)).catch(() => {
-          const u = new SpeechSynthesisUtterance(ttsScript);
-          u.rate = 0.92;
-          u.onend = () => setAudioPlaying(false);
-          setAudioPlaying(true);
-          window.speechSynthesis.speak(u);
-        });
+        void el.play().then(() => setAudioPlaying(true)).catch(() => speakTts());
         return;
       }
     }
-    const u = new SpeechSynthesisUtterance(ttsScript);
-    u.rate = 0.92;
-    u.onend = () => setAudioPlaying(false);
-    setAudioPlaying(true);
-    window.speechSynthesis.speak(u);
+    speakTts();
   };
 
   // Auto-finish when section time expires
@@ -481,7 +480,12 @@ export function ExamMode() {
             type="button"
             disabled={playsLeft <= 0 || audioPlaying}
             onClick={() =>
-              playListeningAudio(extract.id, extract.ttsScript, extract.audioUrl)
+              playListeningAudio(
+                extract.id,
+                extract.transcript,
+                extract.ttsScript,
+                extract.audioUrl,
+              )
             }
             className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-40"
           >
