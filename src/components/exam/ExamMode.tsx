@@ -19,7 +19,7 @@ import { percentToGradeForSkill } from "@/domain/skills";
 import { Panel } from "@/components/ui";
 import { buildExamBandReport } from "@/lib/band-report";
 import { EstimatedBandReport } from "@/components/band/EstimatedBandReport";
-import { speakDialogueDual } from "@/lib/listening-tts";
+import { speakDialogueDual, cancelSpeech } from "@/lib/listening-tts";
 
 type Phase =
   | "intro"
@@ -108,7 +108,7 @@ export function ExamMode() {
   const speakClock = useSectionClock(phase === "speaking");
 
   const stopAudio = useCallback(() => {
-    window.speechSynthesis?.cancel();
+    cancelSpeech();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;

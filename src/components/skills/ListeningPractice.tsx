@@ -6,7 +6,13 @@ import { answersMatch } from "@/domain/skills";
 import { recordAttempt } from "@/lib/progress";
 import { useCountdown, TimerBadge } from "@/components/Timer";
 import { Panel } from "@/components/ui";
-import { speakDialogueDual } from "@/lib/listening-tts";
+import {
+  cancelSpeech,
+  isSpeechPaused,
+  pauseSpeech,
+  resumeSpeech,
+  speakDialogueDual,
+} from "@/lib/listening-tts";
 import { formatTime } from "@/lib/utils";
 
 function isChoice(q: ChoiceQuestion | GapQuestion): q is ChoiceQuestion {
@@ -17,15 +23,18 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ttsTickRef = useRef<number | null>(null);
   const usingTtsRef = useRef(false);
+  const ttsPausedRef = useRef(false);
   const [playing, setPlaying] = useState(false);
   const [currentSec, setCurrentSec] = useState(0);
   const [durationSec, setDurationSec] = useState(extract.durationSec);
   const [fileReady, setFileReady] = useState(false);
+  const [useFile, setUseFile] = useState(Boolean(extract.audioUrl));
   const [showTranscript, setShowTranscript] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
-  const timer = useCountdown(extract.durationSec + 60, playing || submitted === false);
-  const hasFile = Boolean(extract.audioUrl);
+  const [error, setError] = useState<string | null>(null);
+  const timer = useCountdown(extract.durationSec + 60, !submitted);
+  const hasFileUrl = Boolean(extract.audioUrl);
 
   const clearTtsTick = () => {
     if (ttsTickRef.current != null) {
@@ -34,14 +43,11 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
     }
   };
 
-  const stopTtsClock = () => {
-    clearTtsTick();
-  };
-
   const startTtsClock = (fromSec: number, total: number) => {
     clearTtsTick();
     const startedAt = performance.now() - fromSec * 1000;
     ttsTickRef.current = window.setInterval(() => {
+      if (ttsPausedRef.current) return;
       const elapsed = (performance.now() - startedAt) / 1000;
       if (elapsed >= total) {
         setCurrentSec(total);
@@ -52,10 +58,11 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
     }, 200);
   };
 
-  const cancelAllAudio = (resetPosition: boolean) => {
-    window.speechSynthesis?.cancel();
-    stopTtsClock();
+  const hardStop = (resetPosition: boolean) => {
+    cancelSpeech();
+    clearTtsTick();
     usingTtsRef.current = false;
+    ttsPausedRef.current = false;
     const el = audioRef.current;
     if (el) {
       el.pause();
@@ -66,25 +73,28 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
   };
 
   useEffect(() => {
-    cancelAllAudio(true);
+    hardStop(true);
     setDurationSec(extract.durationSec);
     setFileReady(false);
+    setUseFile(Boolean(extract.audioUrl));
     setAnswers({});
     setSubmitted(false);
     setShowTranscript(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset when extract changes
+    setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extract.id]);
 
-  useEffect(() => () => cancelAllAudio(true), []);
+  useEffect(() => () => hardStop(true), []);
 
   useEffect(() => {
     const el = audioRef.current;
-    if (!el || !hasFile) return;
+    if (!el || !hasFileUrl) return;
 
     const onLoaded = () => {
       if (Number.isFinite(el.duration) && el.duration > 0) {
         setDurationSec(el.duration);
         setFileReady(true);
+        setUseFile(true);
       }
     };
     const onTime = () => {
@@ -98,6 +108,11 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
     const onPause = () => {
       if (!usingTtsRef.current) setPlaying(false);
     };
+    const onError = () => {
+      setFileReady(false);
+      setUseFile(false);
+      setError("Studio file unavailable — using browser voice.");
+    };
 
     el.addEventListener("loadedmetadata", onLoaded);
     el.addEventListener("durationchange", onLoaded);
@@ -105,6 +120,7 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
     el.addEventListener("ended", onEnded);
     el.addEventListener("play", onPlay);
     el.addEventListener("pause", onPause);
+    el.addEventListener("error", onError);
     if (el.readyState >= 1) onLoaded();
 
     return () => {
@@ -114,15 +130,22 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
       el.removeEventListener("ended", onEnded);
       el.removeEventListener("play", onPlay);
       el.removeEventListener("pause", onPause);
+      el.removeEventListener("error", onError);
     };
-  }, [hasFile, extract.audioUrl, extract.id]);
+  }, [hasFileUrl, extract.audioUrl, extract.id]);
 
-  const speakTts = (fromSec = currentSec) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const speakTts = (fromSec: number) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      setError("This browser does not support speech playback.");
+      return;
+    }
     const total = Math.max(durationSec || extract.durationSec, 1);
     const ratio = Math.min(0.98, Math.max(0, fromSec / total));
     usingTtsRef.current = true;
-    if (audioRef.current) audioRef.current.pause();
+    ttsPausedRef.current = false;
+    audioRef.current?.pause();
+    setError(null);
+
     speakDialogueDual(
       extract.transcript,
       extract.ttsScript,
@@ -132,38 +155,46 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
           startTtsClock(fromSec, total);
         },
         onEnd: () => {
-          stopTtsClock();
+          clearTtsTick();
           usingTtsRef.current = false;
+          ttsPausedRef.current = false;
           setPlaying(false);
-          setCurrentSec(total);
         },
       },
       { startRatio: ratio },
     );
   };
 
-  const playFile = () => {
+  const playFile = async () => {
     const el = audioRef.current;
     if (!el) {
       speakTts(currentSec);
       return;
     }
     usingTtsRef.current = false;
-    window.speechSynthesis?.cancel();
-    stopTtsClock();
-    el.onerror = () => {
+    ttsPausedRef.current = false;
+    cancelSpeech();
+    clearTtsTick();
+    setError(null);
+    try {
+      await el.play();
+      setPlaying(true);
+      setUseFile(true);
+    } catch {
+      setUseFile(false);
       setFileReady(false);
+      setError("Could not play file — using browser voice.");
       speakTts(currentSec);
-    };
-    void el.play().then(() => setPlaying(true)).catch(() => speakTts(currentSec));
+    }
   };
 
   const togglePlay = () => {
+    // Pause
     if (playing) {
       if (usingTtsRef.current) {
-        window.speechSynthesis?.cancel();
-        stopTtsClock();
-        usingTtsRef.current = false;
+        pauseSpeech();
+        ttsPausedRef.current = true;
+        clearTtsTick();
         setPlaying(false);
         return;
       }
@@ -171,12 +202,18 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
       setPlaying(false);
       return;
     }
-    if (hasFile && fileReady && audioRef.current) {
-      playFile();
+
+    // Resume paused TTS without restarting from scratch
+    if (usingTtsRef.current && ttsPausedRef.current && isSpeechPaused()) {
+      resumeSpeech();
+      ttsPausedRef.current = false;
+      startTtsClock(currentSec, Math.max(durationSec || extract.durationSec, 1));
+      setPlaying(true);
       return;
     }
-    if (hasFile && audioRef.current) {
-      playFile();
+
+    if (useFile && audioRef.current && (fileReady || hasFileUrl)) {
+      void playFile();
       return;
     }
     speakTts(currentSec);
@@ -187,19 +224,15 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
     const next = Math.min(total, Math.max(0, sec));
     setCurrentSec(next);
 
-    if (hasFile && audioRef.current && !usingTtsRef.current && fileReady) {
+    if (useFile && audioRef.current && fileReady && !usingTtsRef.current) {
       audioRef.current.currentTime = next;
       return;
     }
 
-    // TTS (or file fallback): restart from scrub position if currently playing
-    if (playing || usingTtsRef.current) {
+    // Scrubbing TTS while active (playing or paused mid-utterance) restarts from there
+    if (playing || usingTtsRef.current || ttsPausedRef.current) {
       speakTts(next);
     }
-  };
-
-  const onScrub = (value: number) => {
-    seekTo(value);
   };
 
   const result = useMemo(() => {
@@ -220,7 +253,7 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
 
   const onSubmit = () => {
     setSubmitted(true);
-    cancelAllAudio(false);
+    hardStop(false);
     let correct = 0;
     for (const q of extract.questions) {
       const user = answers[q.id] ?? "";
@@ -253,23 +286,15 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
           Part {extract.part}
         </span>
         <span className="text-sm text-ink/55">{extract.specialty}</span>
-        {hasFile ? (
-          <span className="rounded-md bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink/60">
-            Studio audio
-          </span>
-        ) : (
-          <span className="rounded-md bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink/60">
-            Browser voice
-          </span>
-        )}
+        <span className="rounded-md bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink/60">
+          {useFile && fileReady ? "Studio audio" : "Browser voice"}
+        </span>
       </div>
 
       <Panel>
         <h2 className="font-display text-2xl text-ink">{extract.title}</h2>
         <p className="mt-2 text-sm text-ink/60">
-          {hasFile
-            ? "Play the recorded consultation. Drag the bar to jump. Transcript is optional for review."
-            : "Play the consultation (browser voice). Drag the bar to jump ahead. Transcript is optional for review."}
+          Play, pause, and drag the bar to jump. Transcript is optional for review.
         </p>
 
         <div className="mt-5 rounded-xl border border-ink/10 bg-scrub/40 p-4">
@@ -283,7 +308,7 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
             </button>
             <button
               type="button"
-              onClick={() => cancelAllAudio(true)}
+              onClick={() => hardStop(true)}
               className="rounded-md border border-ink/15 px-4 py-2 text-sm font-medium text-ink"
             >
               Stop
@@ -313,7 +338,7 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
                 max={total}
                 step={0.1}
                 value={Math.min(currentSec, total)}
-                onChange={(e) => onScrub(Number(e.target.value))}
+                onChange={(e) => seekTo(Number(e.target.value))}
                 aria-label="Seek audio position"
                 className="relative z-10 h-8 w-full cursor-pointer appearance-none bg-transparent accent-ward"
               />
@@ -322,11 +347,12 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
               {formatTime(Math.floor(total))}
             </span>
           </div>
+          {error ? <p className="mt-2 text-xs text-pulse">{error}</p> : null}
           <p className="mt-1 text-xs text-ink/45">
             Drag to reposition
-            {hasFile
-              ? " · studio files scrub precisely"
-              : " · browser voice restarts from the new point"}
+            {useFile && fileReady
+              ? " · studio scrub is precise"
+              : " · browser voice resumes from the new point"}
           </p>
         </div>
 

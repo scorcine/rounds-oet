@@ -5,6 +5,83 @@ export type DialogueTurn = {
   text: string;
 };
 
+type SpeakHandlers = {
+  onStart?: () => void;
+  onEnd?: () => void;
+};
+
+type SpeakOptions = {
+  startRatio?: number;
+  /** Ignore callbacks from older speak sessions after cancel/restart. */
+  session?: number;
+};
+
+let activeSession = 0;
+let keepAliveTimer: ReturnType<typeof setInterval> | null = null;
+
+function clearKeepAlive() {
+  if (keepAliveTimer != null) {
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = null;
+  }
+}
+
+/** Chrome can freeze speechSynthesis; nudge resume while speaking. */
+function startKeepAlive() {
+  clearKeepAlive();
+  keepAliveTimer = setInterval(() => {
+    try {
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
+      if (window.speechSynthesis.speaking) window.speechSynthesis.resume();
+    } catch {
+      /* ignore */
+    }
+  }, 4000);
+}
+
+export function cancelSpeech() {
+  activeSession += 1;
+  clearKeepAlive();
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export function pauseSpeech() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  clearKeepAlive();
+  try {
+    window.speechSynthesis.pause();
+  } catch {
+    /* ignore */
+  }
+}
+
+export function resumeSpeech() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  try {
+    window.speechSynthesis.resume();
+    startKeepAlive();
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isSpeechActive() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return false;
+  return window.speechSynthesis.speaking || window.speechSynthesis.pending;
+}
+
+export function isSpeechPaused() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return false;
+  return window.speechSynthesis.paused;
+}
+
 /** Parse "Doctor: …" / "Patient: …" style transcripts into turns. */
 export function parseDialogueTurns(transcript: string): DialogueTurn[] {
   const lines = transcript.split(/\n/).map((l) => l.trim()).filter(Boolean);
@@ -60,6 +137,11 @@ function sliceFromRatio(text: string, ratio: number): string {
   return sliced || text.slice(Math.floor(text.length * r)).trim();
 }
 
+function isCanceledError(err: SpeechSynthesisErrorEvent) {
+  const reason = (err as SpeechSynthesisErrorEvent & { error?: string }).error ?? "";
+  return reason === "canceled" || reason === "interrupted";
+}
+
 /**
  * Speak dialogue with alternating clinician/patient voices.
  * Falls back to flat utterance if no turns parsed.
@@ -68,34 +150,58 @@ function sliceFromRatio(text: string, ratio: number): string {
 export function speakDialogueDual(
   transcript: string,
   flatFallback: string,
-  handlers: { onStart?: () => void; onEnd?: () => void },
-  options?: { startRatio?: number },
-): void {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
+  handlers: SpeakHandlers,
+  options?: SpeakOptions,
+): number {
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    handlers.onEnd?.();
+    return -1;
+  }
+
+  cancelSpeech();
+  const session = activeSession;
+  if (options) options.session = session;
 
   const startRatio = options?.startRatio ?? 0;
   const turns = parseDialogueTurns(transcript);
-  const { clinician, patient } = pickVoices();
 
-  // Voices may load async in some browsers
+  const stillCurrent = () => session === activeSession;
+
+  const finish = () => {
+    if (!stillCurrent()) return;
+    clearKeepAlive();
+    handlers.onEnd?.();
+  };
+
   const run = () => {
-    const voices = pickVoices();
-    const cVoice = voices.clinician ?? clinician;
-    const pVoice = voices.patient ?? patient;
+    if (!stillCurrent()) return;
+    const { clinician: cVoice, patient: pVoice } = pickVoices();
+
+    try {
+      window.speechSynthesis.resume();
+    } catch {
+      /* ignore */
+    }
 
     if (!turns.length) {
       const text = sliceFromRatio(flatFallback, startRatio);
       if (!text) {
-        handlers.onEnd?.();
+        finish();
         return;
       }
       const u = new SpeechSynthesisUtterance(text);
       u.rate = 0.92;
       if (cVoice) u.voice = cVoice;
-      u.onend = () => handlers.onEnd?.();
-      handlers.onStart?.();
-      window.speechSynthesis.speak(u);
+      u.onend = () => finish();
+      u.onerror = (e) => {
+        if (isCanceledError(e)) return;
+        finish();
+      };
+      if (stillCurrent()) {
+        handlers.onStart?.();
+        startKeepAlive();
+        window.speechSynthesis.speak(u);
+      }
       return;
     }
 
@@ -117,15 +223,18 @@ export function speakDialogueDual(
     }
 
     if (startIdx >= turns.length) {
-      handlers.onEnd?.();
+      finish();
       return;
     }
 
     handlers.onStart?.();
+    startKeepAlive();
     let i = startIdx;
-    const next = () => {
+
+    const speakNext = () => {
+      if (!stillCurrent()) return;
       if (i >= turns.length) {
-        handlers.onEnd?.();
+        finish();
         return;
       }
       const turn = turns[i++]!;
@@ -133,26 +242,41 @@ export function speakDialogueDual(
       u.rate = 0.92;
       if (isPatientRole(turn.role)) {
         if (pVoice) u.voice = pVoice;
-        u.pitch = 1.12;
+        u.pitch = 1.05;
       } else {
         if (cVoice) u.voice = cVoice;
-        u.pitch = 0.95;
+        u.pitch = 1;
       }
-      u.onend = next;
-      u.onerror = next;
+      u.onend = () => {
+        if (!stillCurrent()) return;
+        speakNext();
+      };
+      u.onerror = (e) => {
+        if (!stillCurrent()) return;
+        if (isCanceledError(e)) return;
+        // Skip broken turn instead of aborting the whole dialogue
+        speakNext();
+      };
       window.speechSynthesis.speak(u);
     };
-    next();
+
+    // Small delay after cancel() — Chrome often drops the first utterance otherwise
+    window.setTimeout(() => {
+      if (!stillCurrent()) return;
+      speakNext();
+    }, 60);
   };
 
   if (window.speechSynthesis.getVoices().length === 0) {
-    window.speechSynthesis.onvoiceschanged = () => {
+    const onVoices = () => {
       window.speechSynthesis.onvoiceschanged = null;
       run();
     };
-    // safety timeout
-    window.setTimeout(run, 250);
+    window.speechSynthesis.onvoiceschanged = onVoices;
+    window.setTimeout(run, 300);
   } else {
     run();
   }
+
+  return session;
 }

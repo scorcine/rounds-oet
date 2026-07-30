@@ -14,6 +14,7 @@ const LISTENING_EXTRACTS_BASE: ListeningExtract[] = [
     title: "Chest pain consultation",
     specialty: "Cardiology",
     durationSec: 300,
+    audioUrl: "/audio/lis-a-1.mp3",
     transcript: `Doctor: Good morning, Mr Patel. What brings you in today?
 Patient: I've had this pressure in my chest since yesterday evening. It came on while I was walking up the stairs at home.
 Doctor: Can you describe the pain for me?
@@ -71,6 +72,7 @@ Doctor: I'd like to do an ECG and some blood tests today, including troponin. We
     title: "Handover: post-op hip replacement",
     specialty: "Orthopaedics",
     durationSec: 90,
+    audioUrl: "/audio/lis-b-1.mp3",
     transcript: `Nurse coordinator: Just a quick update on bed 4, Mrs Chen, day one after right total hip replacement. She was comfortable overnight on PRN oxycodone. Neurovascular observations of the right leg are intact. Hb this morning is 98. Physio wants her standing with a frame this afternoon. Watch for dizziness on first mobilisation — she had a vasovagal episode yesterday evening after standing. VTE prophylaxis is enoxaparin 40 milligrams subcutaneously daily. Wound is dry. She's nil by mouth until speech therapy reviews her swallow at 11 because of mild choking on water last night — likely related to residual anaesthetic effects, but we need clearance.`,
     ttsScript:
       "Just a quick update on bed 4, Mrs Chen, day one after right total hip replacement. She was comfortable overnight on PRN oxycodone. Neurovascular observations of the right leg are intact. Hb this morning is 98. Physio wants her standing with a frame this afternoon. Watch for dizziness on first mobilisation — she had a vasovagal episode yesterday evening after standing. VTE prophylaxis is enoxaparin 40 milligrams subcutaneously daily. Wound is dry. She's nil by mouth until speech therapy reviews her swallow at 11 because of mild choking on water last night — likely related to residual anaesthetic effects, but we need clearance.",
@@ -102,6 +104,7 @@ Doctor: I'd like to do an ECG and some blood tests today, including troponin. We
     title: "Talk: antibiotic stewardship in ED",
     specialty: "Infectious disease",
     durationSec: 240,
+    audioUrl: "/audio/lis-c-1.mp3",
     transcript: `Speaker: Today I'll outline three practical steps for antibiotic stewardship in the emergency department. First, obtain cultures before the first dose whenever sepsis is suspected — but do not delay antibiotics more than one hour in septic shock. Second, use local guidelines for community-acquired pneumonia; our audit showed 38% of patients received broader cover than needed, mainly dual antipseudomonal therapy without risk factors. Third, set an automatic 48-hour review for IV antibiotics started in ED. Early IV-to-oral switch reduces line infections and shortens stays. Questions about penicillin allergy labels are crucial: many listed allergies are intolerance. Where safe, deliberate challenge pathways can reclaim first-line agents.`,
     ttsScript:
       "Today I'll outline three practical steps for antibiotic stewardship in the emergency department. First, obtain cultures before the first dose whenever sepsis is suspected — but do not delay antibiotics more than one hour in septic shock. Second, use local guidelines for community-acquired pneumonia; our audit showed 38% of patients received broader cover than needed, mainly dual antipseudomonal therapy without risk factors. Third, set an automatic 48-hour review for IV antibiotics started in ED. Early IV-to-oral switch reduces line infections and shortens stays. Questions about penicillin allergy labels are crucial: many listed allergies are intolerance. Where safe, deliberate challenge pathways can reclaim first-line agents.",
