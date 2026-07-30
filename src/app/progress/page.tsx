@@ -3,34 +3,40 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Skill, UserProgress } from "@/domain/types";
+import type { StudyState } from "@/domain/study";
 import { SKILL_META, percentToGrade, gradeLabel } from "@/domain/skills";
 import { DEFAULT_PROGRESS, loadProgress, overallReadiness, skillStats } from "@/lib/progress";
+import { DEFAULT_STUDY, loadStudy, getDueQueue, dailyRemaining } from "@/lib/study-store";
 import { PageHero, Panel } from "@/components/ui";
 
 const SKILLS: Skill[] = ["listening", "reading", "writing", "speaking"];
 
 export default function ProgressPage() {
   const [progress, setProgress] = useState<UserProgress>(DEFAULT_PROGRESS);
+  const [study, setStudy] = useState<StudyState>(DEFAULT_STUDY);
 
   useEffect(() => {
     setProgress(loadProgress());
+    setStudy(loadStudy());
   }, []);
 
   const readiness = overallReadiness(progress);
+  const due = getDueQueue(study).length;
+  const remaining = dailyRemaining(study);
 
   return (
     <div>
       <PageHero
         eyebrow="Progress"
         title="Your practice pulse"
-        description="Scores stay in local storage on this device. Accounts and cloud sync come with the mobile migration."
+        description="Skills attempts and SRS study live on this device. Cloud sync comes later with accounts."
       />
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-12 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Panel className="bg-ink text-paper">
-            <p className="text-xs uppercase tracking-[0.18em] text-scrub/80">Readiness</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-scrub/80">Skills readiness</p>
             <p className="mt-2 font-display text-5xl">{readiness}%</p>
-            <p className="mt-2 text-sm text-paper/60">Average across skills with attempts</p>
+            <p className="mt-2 text-sm text-paper/60">Average of skill attempts</p>
           </Panel>
           <Panel>
             <p className="text-xs uppercase tracking-[0.18em] text-ward">Streak</p>
@@ -38,10 +44,29 @@ export default function ProgressPage() {
             <p className="mt-2 text-sm text-ink/60">days practicing</p>
           </Panel>
           <Panel>
-            <p className="text-xs uppercase tracking-[0.18em] text-ward">Target</p>
-            <p className="mt-2 font-display text-4xl text-ink">{gradeLabel(progress.targetGrade)}</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-ward">SRS today</p>
+            <p className="mt-2 font-display text-5xl text-ink">
+              {study.daily.reviewsDone}/{study.daily.goal}
+            </p>
             <p className="mt-2 text-sm text-ink/60">
-              Vocab mastered: {progress.vocabMastered.length}
+              {remaining} left · {due} due · {study.xp} XP
+            </p>
+          </Panel>
+          <Panel>
+            <p className="text-xs uppercase tracking-[0.18em] text-ward">Placement</p>
+            <p className="mt-2 font-display text-4xl text-ink">
+              {study.diagnostic ? `${study.diagnostic.overallPercent}%` : "—"}
+            </p>
+            <p className="mt-2 text-sm text-ink/60">
+              {study.diagnostic ? (
+                <Link href="/competencies" className="font-semibold text-ward">
+                  Competency map →
+                </Link>
+              ) : (
+                <Link href="/diagnose" className="font-semibold text-pulse">
+                  Take diagnostic →
+                </Link>
+              )}
             </p>
           </Panel>
         </div>
@@ -82,7 +107,9 @@ export default function ProgressPage() {
         </div>
 
         <Panel>
-          <h2 className="font-display text-2xl text-ink">Recent attempts</h2>
+          <h2 className="font-display text-2xl text-ink">Target</h2>
+          <p className="mt-2 text-sm text-ink/65">{gradeLabel(progress.targetGrade)}</p>
+          <h2 className="mt-8 font-display text-2xl text-ink">Recent skill attempts</h2>
           {progress.attempts.length === 0 ? (
             <p className="mt-3 text-sm text-ink/60">No attempts yet — start from Practice.</p>
           ) : (

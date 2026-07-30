@@ -5,11 +5,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
+  { href: "/diagnose", label: "Diagnose" },
+  { href: "/study", label: "Study" },
+  { href: "/competencies", label: "Map" },
   { href: "/practice", label: "Practice" },
-  { href: "/practice/listening", label: "Listening" },
-  { href: "/practice/reading", label: "Reading" },
-  { href: "/practice/writing", label: "Writing" },
-  { href: "/practice/speaking", label: "Speaking" },
   { href: "/vocabulary", label: "Vocab" },
   { href: "/mock", label: "Mock" },
   { href: "/progress", label: "Progress" },
@@ -51,10 +50,10 @@ export function SiteHeader() {
           })}
         </nav>
         <Link
-          href="/practice"
+          href="/diagnose"
           className="rounded-md bg-pulse px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-pulse/90"
         >
-          Start
+          Diagnose
         </Link>
       </div>
       <div className="flex gap-1 overflow-x-auto border-t border-ink/5 px-4 py-2 md:hidden">

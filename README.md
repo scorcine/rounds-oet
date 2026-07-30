@@ -12,25 +12,17 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## What's included
+## Phase 1 — Adaptive study
 
-- **Listening** — Parts A/B/C with TTS audio, gap + MCQ, scoring
-- **Reading** — Parts A/B/C timed passages
-- **Writing** — case notes → letter, word count, rubric, sample
-- **Speaking** — role-play cards, mic recording, self-assessment
-- **Vocabulary** — clinical deck with mastered flags
-- **Mock** — ordered full-set pathway
-- **Progress** — localStorage attempts, streak, readiness
+- **`/diagnose`** — 16-question mini-OET across 4 competencies
+- **`/study`** — SM-2 spaced repetition with daily goals
+- **`/competencies`** — mastery map + weak-area priorities
+- Starter deck (~36 cards) ready to scale toward 2000+
 
-## Mobile-ready layout
+## Skills practice
 
-| Path | Role |
-|------|------|
-| `src/domain/` | Shared types & scoring (portable) |
-| `src/data/` | Curriculum content (portable) |
-| `src/lib/progress.ts` | Storage adapter (swap for API) |
-| `src/components/` | Web UI |
-| `src/app/` | Next.js routes |
+- Listening, Reading, Writing, Speaking modules
+- Vocabulary, Mock, Progress
 
 ## Disclaimer
 

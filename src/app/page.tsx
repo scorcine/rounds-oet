@@ -23,30 +23,57 @@ export default function HomePage() {
             className="animate-rise mt-6 max-w-xl text-lg leading-relaxed text-ink/70 sm:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            Clinical English practice for doctors — Listening, Reading, Writing and Speaking in one
-            web app, ready to grow into mobile.
+            Adaptive OET Medicine study — diagnostic placement, spaced repetition, then full skills
+            practice. Built web-first for later mobile.
           </p>
           <div
             className="animate-rise mt-10 flex flex-wrap gap-3"
             style={{ animationDelay: "140ms" }}
           >
             <Link
-              href="/practice"
+              href="/diagnose"
               className="rounded-md bg-pulse px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_-12px_rgba(232,93,76,0.8)] transition hover:bg-pulse/90"
             >
-              Enter practice
+              Take diagnostic
             </Link>
             <Link
-              href="/mock"
+              href="/study"
               className="rounded-md border border-ink/20 bg-paper/70 px-6 py-3 text-sm font-semibold text-ink backdrop-blur transition hover:border-ink/40"
             >
-              Full mock set
+              Daily study
             </Link>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ward">Study loop</p>
+          <h2 className="mt-3 font-display text-4xl text-ink">Diagnose → Review → Practise</h2>
+          <p className="mt-3 text-ink/65">
+            Placement maps four competencies. Spaced repetition schedules your weak areas first.
+            Skills modules train the exam itself.
+          </p>
+        </div>
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {[
+            { href: "/diagnose", title: "Diagnostic", blurb: "16-question mini-OET placement." },
+            { href: "/study", title: "SRS reviews", blurb: "Daily Anki-style card goal." },
+            { href: "/competencies", title: "Competency map", blurb: "See mastery and priorities." },
+          ].map((item, i) => (
+            <SkillCard
+              key={item.href}
+              href={item.href}
+              title={item.title}
+              blurb={item.blurb}
+              meta={`Step ${i + 1}`}
+              index={i}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ward">Four skills</p>
           <h2 className="mt-3 font-display text-4xl text-ink">Train the whole exam</h2>
@@ -79,10 +106,10 @@ export default function HomePage() {
             </p>
           </div>
           <ul className="space-y-4 text-sm text-paper/75">
-            <li className="border-l-2 border-pulse pl-4">Timed practice + mock pathway</li>
-            <li className="border-l-2 border-ward pl-4">Writing rubrics & sample letters</li>
-            <li className="border-l-2 border-amber pl-4">Speaking recording + self-assessment</li>
-            <li className="border-l-2 border-scrub pl-4">Clinical vocabulary deck</li>
+            <li className="border-l-2 border-pulse pl-4">Mini-OET diagnostic + competency map</li>
+            <li className="border-l-2 border-ward pl-4">Spaced repetition with daily goals</li>
+            <li className="border-l-2 border-amber pl-4">Four skills practice under exam timing</li>
+            <li className="border-l-2 border-scrub pl-4">Same domain models ready for mobile</li>
           </ul>
         </div>
       </section>

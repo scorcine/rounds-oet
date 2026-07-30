@@ -10,15 +10,29 @@ export default function PracticePage() {
     <div>
       <PageHero
         eyebrow="Practice hub"
-        title="Choose a skill and start a timed set"
-        description="Work skill-by-skill or jump into a full mock. Your scores stay on this browser until we add accounts."
+        title="Skills after your study loop"
+        description="Use Diagnose + daily SRS first, then drill Listening, Reading, Writing and Speaking under exam timing."
         action={
-          <Link
-            href="/mock"
-            className="mt-2 inline-flex w-fit rounded-md border border-ink/20 px-4 py-2 text-sm font-semibold text-ink"
-          >
-            Open mock exam
-          </Link>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link
+              href="/diagnose"
+              className="inline-flex rounded-md bg-pulse px-4 py-2 text-sm font-semibold text-white"
+            >
+              Diagnostic
+            </Link>
+            <Link
+              href="/study"
+              className="inline-flex rounded-md border border-ink/20 px-4 py-2 text-sm font-semibold text-ink"
+            >
+              Daily study
+            </Link>
+            <Link
+              href="/mock"
+              className="inline-flex rounded-md border border-ink/20 px-4 py-2 text-sm font-semibold text-ink"
+            >
+              Mock exam
+            </Link>
+          </div>
         }
       />
       <div className="mx-auto grid max-w-6xl gap-4 px-4 py-12 sm:grid-cols-2 sm:px-6">
