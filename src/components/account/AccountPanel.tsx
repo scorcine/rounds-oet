@@ -48,16 +48,24 @@ export function AccountPanel() {
   useEffect(() => {
     refreshLocal();
     if (!ready) return;
+
+    let unsubscribe: (() => void) | undefined;
     void (async () => {
       try {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
-        const { data } = await supabase.auth.getUser();
-        setUserEmail(data.user?.email ?? null);
+        const { data } = await supabase.auth.getSession();
+        setUserEmail(data.session?.user?.email ?? null);
+        const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+          setUserEmail(session?.user?.email ?? null);
+        });
+        unsubscribe = () => sub.subscription.unsubscribe();
       } catch {
         /* not configured at runtime */
       }
     })();
+
+    return () => unsubscribe?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
@@ -79,8 +87,15 @@ export function AccountPanel() {
       const supabase = createClient();
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
-      setUserEmail(data.user?.email ?? email);
-      setStatus("Account created. Check email if confirmation is required, then Sync now.");
+      if (!data.session) {
+        setUserEmail(null);
+        setStatus(
+          "Account created, but email confirmation is ON. In Supabase → Authentication → Providers → Email, turn OFF “Confirm email”, then Sign in here.",
+        );
+        return;
+      }
+      setUserEmail(data.session.user.email ?? email);
+      setStatus("Account created and signed in. Click Sync now.");
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Sign up failed");
     } finally {
@@ -97,7 +112,8 @@ export function AccountPanel() {
       const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      setUserEmail(data.user?.email ?? email);
+      if (!data.session) throw new Error("No session after sign in — check email confirmation settings.");
+      setUserEmail(data.session.user.email ?? email);
       setStatus("Signed in. Click Sync now to merge cloud ↔ this device.");
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Sign in failed");
@@ -122,17 +138,23 @@ export function AccountPanel() {
     try {
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) throw new Error("Sign in first");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      if (!user) {
+        throw new Error(
+          "No active session. Sign out, then Sign in again (and disable Confirm email in Supabase if needed).",
+        );
+      }
 
       const local = collectLocalPayload(displayName);
       local.badgesUnlocked = evaluateBadges(local);
 
-      const { data: row } = await supabase
+      const { data: row, error: readError } = await supabase
         .from("sync_blobs")
         .select("payload, updated_at")
-        .eq("user_id", auth.user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
+      if (readError) throw readError;
 
       let merged: SyncPayload = local;
       if (row?.payload) {
@@ -143,7 +165,7 @@ export function AccountPanel() {
       merged.updatedAt = new Date().toISOString();
 
       const { error } = await supabase.from("sync_blobs").upsert({
-        user_id: auth.user.id,
+        user_id: user.id,
         payload: merged,
         updated_at: merged.updatedAt,
       });
