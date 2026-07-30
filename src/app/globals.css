@@ -1,12 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #102a2e;
-  --ward: #1a5f6a;
-  --scrub: #dceeea;
-  --pulse: #e85d4c;
-  --amber: #c49212;
-  --paper: #f4f8f7;
+  /* Clinical-tech system: cool graphite + signal cyan + hot CTA */
+  --ink: #07111a;
+  --ward: #00d6c0;
+  --scrub: #e6eef5;
+  --pulse: #ff3d2e;
+  --amber: #ffb020;
+  --paper: #f3f6fa;
+  --steel: #1a2a3a;
+  --mist: #9aafc0;
   --background: var(--paper);
   --foreground: var(--ink);
 }
@@ -20,6 +23,8 @@
   --color-pulse: var(--pulse);
   --color-amber: var(--amber);
   --color-paper: var(--paper);
+  --color-steel: var(--steel);
+  --color-mist: var(--mist);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
   --font-mono: var(--font-mono);
@@ -32,13 +37,14 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.03em;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -46,13 +52,53 @@ body {
   }
 }
 
-.animate-rise {
-  animation: rise 0.7s ease-out both;
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
 }
 
-.ward-grid {
+@keyframes pulse-line {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-rise {
+  animation: rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-scan {
+  animation: scan 5.5s ease-in-out infinite;
+}
+
+.animate-pulse-line {
+  animation: pulse-line 2.4s ease-in-out infinite;
+}
+
+.tech-grid {
   background-image:
-    linear-gradient(rgba(16, 42, 46, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 42, 46, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(rgba(0, 214, 192, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 214, 192, 0.07) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.hero-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 75% 20%, rgba(0, 214, 192, 0.22), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255, 61, 46, 0.14), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(26, 42, 58, 0.9), transparent 70%),
+    linear-gradient(165deg, #040a10 0%, #0a1622 45%, #0d1c28 100%);
 }

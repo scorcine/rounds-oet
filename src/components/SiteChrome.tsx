@@ -21,18 +21,32 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 border-b border-ink/10 backdrop-blur-md",
-        isLanding ? "bg-scrub/80" : "bg-paper/90",
+        "sticky top-0 z-40 border-b backdrop-blur-xl",
+        isLanding
+          ? "border-white/10 bg-[#07111a]/80 text-paper"
+          : "border-ink/10 bg-paper/90 text-ink",
       )}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/" className="group flex items-baseline gap-2">
-          <span className="font-display text-2xl tracking-tight text-ink">Rounds</span>
-          <span className="hidden text-xs font-medium uppercase tracking-[0.18em] text-ward sm:inline">
+          <span
+            className={cn(
+              "font-display text-2xl font-extrabold tracking-tight",
+              isLanding ? "text-paper" : "text-ink",
+            )}
+          >
+            Rounds
+          </span>
+          <span
+            className={cn(
+              "hidden text-[10px] font-semibold uppercase tracking-[0.22em] sm:inline",
+              isLanding ? "text-ward" : "text-steel",
+            )}
+          >
             OET Medicine
           </span>
         </Link>
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 lg:flex">
           {LINKS.map((link) => {
             const active = pathname === link.href || pathname.startsWith(link.href + "/");
             return (
@@ -40,8 +54,14 @@ export function SiteHeader() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "rounded-md px-2.5 py-1.5 text-sm transition-colors",
-                  active ? "bg-ink text-paper" : "text-ink/70 hover:bg-ink/5 hover:text-ink",
+                  "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
+                  isLanding
+                    ? active
+                      ? "bg-white/10 text-ward"
+                      : "text-paper/65 hover:bg-white/5 hover:text-paper"
+                    : active
+                      ? "bg-ink text-paper"
+                      : "text-ink/60 hover:bg-ink/5 hover:text-ink",
                 )}
               >
                 {link.label}
@@ -51,17 +71,25 @@ export function SiteHeader() {
         </nav>
         <Link
           href="/diagnose"
-          className="rounded-md bg-pulse px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-pulse/90"
+          className="rounded-md bg-pulse px-3.5 py-1.5 text-sm font-bold text-white transition hover:brightness-110"
         >
-          Diagnose
+          Start free
         </Link>
       </div>
-      <div className="flex gap-1 overflow-x-auto border-t border-ink/5 px-4 py-2 md:hidden">
+      <div
+        className={cn(
+          "flex gap-1 overflow-x-auto border-t px-4 py-2 lg:hidden",
+          isLanding ? "border-white/10" : "border-ink/5",
+        )}
+      >
         {LINKS.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className="shrink-0 rounded-full bg-ink/5 px-3 py-1 text-xs font-medium text-ink/80"
+            className={cn(
+              "shrink-0 rounded-md px-3 py-1 text-xs font-semibold",
+              isLanding ? "bg-white/10 text-paper/80" : "bg-ink/5 text-ink/80",
+            )}
           >
             {link.label}
           </Link>
@@ -73,12 +101,16 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-ink/10 bg-ink text-paper/80">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p className="font-display text-xl text-paper">Rounds</p>
-        <p className="max-w-md text-sm text-paper/60">
-          Practice materials are original and for exam preparation only — not affiliated with
-          Cambridge Boxhill Language Assessment or official OET.
+    <footer className="mt-auto border-t border-white/10 bg-ink text-paper/80">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+        <div>
+          <p className="font-display text-2xl font-bold text-paper">Rounds</p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-ward">
+            OET Medicine
+          </p>
+        </div>
+        <p className="max-w-md text-sm text-paper/50">
+          Original practice materials for exam preparation only — not affiliated with official OET.
         </p>
       </div>
     </footer>

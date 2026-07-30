@@ -7,109 +7,156 @@ const skills = Object.entries(SKILL_META);
 export default function HomePage() {
   return (
     <div>
-      <section className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden ward-grid">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(26,95,106,0.22),transparent_50%),radial-gradient(ellipse_at_90%_10%,rgba(232,93,76,0.16),transparent_40%),linear-gradient(180deg,#dceeea_0%,#f4f8f7_55%,#f4f8f7_100%)]" />
-        <div className="pointer-events-none absolute -right-24 top-24 h-[28rem] w-[28rem] rounded-full bg-ward/20 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-paper to-transparent" />
+      <section className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden hero-mesh">
+        <div className="pointer-events-none absolute inset-0 tech-grid opacity-60" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(ellipse_at_center,rgba(0,214,192,0.12),transparent_65%)]" />
+        <div className="animate-scan pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-ward/20 to-transparent" />
+        <div className="pointer-events-none absolute bottom-24 left-[12%] h-px w-40 animate-pulse-line bg-gradient-to-r from-transparent via-ward to-transparent" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-paper to-transparent" />
 
-        <div className="relative mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-6xl flex-col justify-center px-4 py-16 sm:px-6">
-          <p className="animate-rise text-xs font-semibold uppercase tracking-[0.28em] text-ward">
-            OET Medicine
+        <div className="relative mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-6xl flex-col justify-center px-4 py-20 sm:px-6">
+          <p className="animate-rise font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-ward">
+            OET Medicine · Adaptive engine
           </p>
-          <h1 className="animate-rise mt-4 max-w-3xl font-display text-6xl leading-[0.95] tracking-tight text-ink sm:text-7xl md:text-8xl">
+          <h1 className="animate-rise mt-5 max-w-4xl font-display text-6xl font-extrabold leading-[0.9] tracking-tight text-paper sm:text-7xl md:text-8xl">
             Rounds
           </h1>
           <p
-            className="animate-rise mt-6 max-w-xl text-lg leading-relaxed text-ink/70 sm:text-xl"
-            style={{ animationDelay: "80ms" }}
+            className="animate-rise mt-6 max-w-lg text-lg leading-relaxed text-paper/70 sm:text-xl"
+            style={{ animationDelay: "90ms" }}
           >
-            Adaptive OET Medicine study — diagnostic placement, spaced repetition, then full skills
-            practice. Built web-first for later mobile.
+            The clinical English system that finds your weak spots — then trains them until exam day.
           </p>
           <div
-            className="animate-rise mt-10 flex flex-wrap gap-3"
-            style={{ animationDelay: "140ms" }}
+            className="animate-rise mt-10 flex flex-wrap items-center gap-3"
+            style={{ animationDelay: "160ms" }}
           >
             <Link
               href="/diagnose"
-              className="rounded-md bg-pulse px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_-12px_rgba(232,93,76,0.8)] transition hover:bg-pulse/90"
+              className="rounded-md bg-pulse px-7 py-3.5 text-sm font-bold text-white transition hover:brightness-110"
             >
-              Take diagnostic
+              Take free diagnostic
             </Link>
             <Link
-              href="/study"
-              className="rounded-md border border-ink/20 bg-paper/70 px-6 py-3 text-sm font-semibold text-ink backdrop-blur transition hover:border-ink/40"
+              href="/exam"
+              className="rounded-md border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-semibold text-paper backdrop-blur transition hover:border-ward/50 hover:bg-white/10"
             >
-              Daily study
+              Run exam mode
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ward">Study loop</p>
-          <h2 className="mt-3 font-display text-4xl text-ink">Diagnose → Review → Practise</h2>
-          <p className="mt-3 text-ink/65">
-            Placement maps four competencies. Spaced repetition schedules your weak areas first.
-            Skills modules train the exam itself.
-          </p>
-        </div>
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {[
-            { href: "/diagnose", title: "Diagnostic", blurb: "16-question mini-OET placement." },
-            { href: "/lessons", title: "Lessons", blurb: "Microlearning by clinical track." },
-            { href: "/exam", title: "Exam mode", blurb: "Timed full set + pacing report." },
-          ].map((item, i) => (
-            <SkillCard
-              key={item.href}
-              href={item.href}
-              title={item.title}
-              blurb={item.blurb}
-              meta={`Step ${i + 1}`}
-              index={i}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ward">Four skills</p>
-          <h2 className="mt-3 font-display text-4xl text-ink">Train the whole exam</h2>
-          <p className="mt-3 text-ink/65">
-            Each module mirrors exam timing and task types, with progress saved on this device.
-          </p>
-        </div>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {skills.map(([key, meta], i) => (
-            <SkillCard
-              key={key}
-              href={meta.href}
-              title={meta.label}
-              blurb={meta.blurb}
-              meta={`${meta.examMinutes} min exam`}
-              index={i}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-ink/10 bg-ink text-paper">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1.2fr_1fr]">
-          <div>
-            <h2 className="font-display text-4xl">Built web-first</h2>
-            <p className="mt-4 max-w-lg text-paper/70">
-              Domain models and content live outside the UI layer, so the same Listening cases,
-              Writing rubrics and Speaking cards can power a future React Native app without
-              rewriting the curriculum.
+      <section className="bg-paper px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-steel">
+              Product loop
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-bold text-ink md:text-5xl">
+              Diagnose. Drill. Dominate the exam.
+            </h2>
+            <p className="mt-4 text-ink/60">
+              Placement maps your competencies. Spaced repetition hits weak areas daily. Timed exam
+              mode proves you are ready.
             </p>
           </div>
-          <ul className="space-y-4 text-sm text-paper/75">
-            <li className="border-l-2 border-pulse pl-4">Adaptive study + content bank</li>
-            <li className="border-l-2 border-ward pl-4">Exam mode with pacing analytics</li>
-            <li className="border-l-2 border-amber pl-4">Writing & Speaking AI feedback</li>
-            <li className="border-l-2 border-scrub pl-4">Account sync, badges & planner</li>
+          <div className="mt-12 grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                href: "/diagnose",
+                title: "Diagnostic",
+                blurb: "16-question mini-OET that seeds your personal track.",
+              },
+              {
+                href: "/study",
+                title: "SRS engine",
+                blurb: "Anki-style reviews with adaptive daily goals.",
+              },
+              {
+                href: "/exam",
+                title: "Exam mode",
+                blurb: "Real section timers and pacing analytics.",
+              },
+            ].map((item, i) => (
+              <SkillCard
+                key={item.href}
+                href={item.href}
+                title={item.title}
+                blurb={item.blurb}
+                meta={`0${i + 1}`}
+                index={i}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-ink/8 bg-scrub/50 px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-steel">
+              Four skills
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-bold text-ink md:text-5xl">
+              Train like the real test
+            </h2>
+            <p className="mt-4 text-ink/60">
+              Listening, Reading, Writing and Speaking — with AI rubric feedback when you connect
+              OpenAI.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {skills.map(([key, meta], i) => (
+              <SkillCard
+                key={key}
+                href={meta.href}
+                title={meta.label}
+                blurb={meta.blurb}
+                meta={`${meta.examMinutes} min`}
+                index={i}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden bg-ink px-4 py-20 text-paper sm:px-6">
+        <div className="pointer-events-none absolute inset-0 tech-grid opacity-30" />
+        <div className="relative mx-auto grid max-w-6xl gap-12 md:grid-cols-[1.15fr_1fr] md:items-center">
+          <div>
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-ward">
+              Why Rounds
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-bold md:text-5xl">
+              Built to convert study time into band scores
+            </h2>
+            <p className="mt-4 max-w-lg text-paper/60">
+              Not another generic English app — a medicine-first system with analytics, AI feedback
+              and a path to mobile.
+            </p>
+            <Link
+              href="/account"
+              className="mt-8 inline-flex rounded-md bg-ward px-6 py-3 text-sm font-bold text-ink transition hover:brightness-110"
+            >
+              Create your study account
+            </Link>
+          </div>
+          <ul className="space-y-4 text-sm">
+            {[
+              ["Adaptive track", "Diagnostic + SRS priorities"],
+              ["Exam intelligence", "Pacing & topic error reports"],
+              ["AI examiner", "Writing bands & speaking criteria"],
+              ["Clinical content", "GP · Ortho · ED · Surgery · Anaesthesia"],
+            ].map(([t, d]) => (
+              <li
+                key={t}
+                className="flex items-start justify-between gap-4 border-b border-white/10 py-3"
+              >
+                <span className="font-semibold text-paper">{t}</span>
+                <span className="text-right text-paper/45">{d}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </section>

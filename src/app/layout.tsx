@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
-import { Fraunces, Figtree, IBM_Plex_Mono } from "next/font/google";
+import { Syne, Manrope, JetBrains_Mono } from "next/font/google";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Syne({
   variable: "--font-display",
   subsets: ["latin"],
-  axes: ["SOFT", "WONK", "opsz"],
+  weight: ["600", "700", "800"],
 });
 
-const body = Figtree({
+const body = Manrope({
   variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const mono = IBM_Plex_Mono({
+const mono = JetBrains_Mono({
   variable: "--font-mono",
-  weight: ["400", "500"],
   subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s · Rounds",
   },
   description:
-    "Web-first OET Medicine preparation across Listening, Reading, Writing and Speaking — built for later mobile.",
+    "Adaptive OET Medicine training for doctors — diagnostic, spaced repetition, exam mode and AI feedback.",
 };
 
 export default function RootLayout({
