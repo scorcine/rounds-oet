@@ -43,7 +43,7 @@ export interface ReadingPassage {
   specialty: string;
   timeLimitSec: number;
   text: string;
-  questions: ChoiceQuestion[];
+  questions: (ChoiceQuestion | GapQuestion)[];
 }
 
 export interface WritingCase {
