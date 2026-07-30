@@ -11,7 +11,7 @@ import {
   scoreListeningAnswers,
   scoreReadingAnswers,
 } from "@/lib/exam-store";
-import { getMockExamBlueprint, OFFICIAL_TARGETS } from "@/data/exam-blueprint";
+import { getMockExamBlueprint, OFFICIAL_TARGETS, EXAM_PAPERS, type ExamPaperId } from "@/data/exam-blueprint";
 import { heuristicWritingFeedback } from "@/lib/writing-feedback";
 import { heuristicSpeakingFeedback } from "@/lib/speaking-feedback";
 import { formatTime, countWords } from "@/lib/utils";
@@ -74,7 +74,8 @@ function useQuestionTimer(activeId: string | null, enabled: boolean) {
 }
 
 export function ExamMode() {
-  const blueprint = useMemo(() => getMockExamBlueprint(), []);
+  const [paperId, setPaperId] = useState<ExamPaperId>(1);
+  const blueprint = useMemo(() => getMockExamBlueprint(paperId), [paperId]);
   const [phase, setPhase] = useState<Phase>("intro");
   const [startedAt, setStartedAt] = useState("");
   const [sections, setSections] = useState<SectionResult[]>([]);
@@ -380,15 +381,35 @@ export function ExamMode() {
         <p className="mt-3 text-sm leading-relaxed text-ink/65">
           Official-shaped Listening and Reading papers ({OFFICIAL_TARGETS.listeningQuestions} +{" "}
           {OFFICIAL_TARGETS.readingQuestions} questions), plus one writing letter and two speaking
-          role-plays. Strict timing, limited audio plays, rubric scoring. Bands remain study
-          estimates only.
+          role-plays. Choose a paper for content variation — bands remain study estimates only.
         </p>
+
+        <div className="mt-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-steel">Select paper</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+            {EXAM_PAPERS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPaperId(p.id)}
+                className={`rounded-xl border px-3 py-3 text-left transition ${
+                  paperId === p.id
+                    ? "border-ward bg-ward/10 shadow-[0_0_24px_-12px_rgba(0,214,192,0.6)]"
+                    : "border-ink/10 hover:border-ward/40"
+                }`}
+              >
+                <p className="font-display text-lg font-bold text-ink">{p.label}</p>
+                <p className="mt-1 text-xs text-ink/55">{p.theme}</p>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="mt-6 rounded-xl border border-ink/10 bg-scrub/40 p-4">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-steel">
-                Paper coverage
+                {blueprint.paperLabel} · paper coverage
               </p>
               <p className="mt-1 font-display text-4xl font-bold text-ink">
                 {blueprint.coveragePercent}%
@@ -398,6 +419,8 @@ export function ExamMode() {
               L {blueprint.listeningQuestionCount}/{OFFICIAL_TARGETS.listeningQuestions}
               <br />
               R {blueprint.readingQuestionCount}/{OFFICIAL_TARGETS.readingQuestions}
+              <br />
+              Audio {blueprint.audioReadyCount}/{blueprint.listening.length}
             </p>
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink/10">
@@ -414,14 +437,15 @@ export function ExamMode() {
           ))}
         </ul>
         <p className="mt-4 text-xs text-ink/50">
-          When time hits zero the section auto-submits. No transcript in Listening.
+          When time hits zero the section auto-submits. No transcript in Listening. Part A Reading
+          includes cross-document matching.
         </p>
         <button
           type="button"
           onClick={startExam}
           className="mt-8 rounded-md bg-pulse px-5 py-2.5 text-sm font-semibold text-white"
         >
-          Start full-paper mock
+          Start {blueprint.paperLabel}
         </button>
       </Panel>
     );

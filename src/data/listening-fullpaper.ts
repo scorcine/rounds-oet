@@ -7,6 +7,7 @@ export const LISTENING_EXTRACTS_FULLPAPER: ListeningExtract[] = [
     title: "New-onset angina consultation",
     specialty: "Cardiology",
     durationSec: 320,
+    audioUrl: "/audio/lis-fa-1.mp3",
     transcript: `Doctor: Good morning, Mr Hassan. What brings you in today?
 Patient: I've been getting a tight feeling across my chest for about six weeks. It comes on when I walk uphill to the bus stop.
 Doctor: How far can you walk before it starts?
@@ -121,6 +122,7 @@ Doctor: I'd like an ECG today, fasting lipids and HbA1c, and I'll refer you urge
     title: "COPD exacerbation review",
     specialty: "Respiratory",
     durationSec: 330,
+    audioUrl: "/audio/lis-fa-2.mp3",
     transcript: `Doctor: Hello Mrs Okafor. How has your breathing been since we last saw you?
 Patient: Worse over the past four days. More cough, and the sputum has turned green. I get breathless after walking to the kitchen.
 Doctor: Any fever or chest pain?
@@ -259,6 +261,7 @@ Doctor: I'll prescribe prednisolone thirty milligrams daily for five days and do
     title: "ED handover: suspected sepsis",
     specialty: "ED",
     durationSec: 75,
+    audioUrl: "/audio/lis-fb-1.mp3",
     transcript: `Registrar: Bed 3 is Mr Reid, seventy-two, from the nursing home. Fever and confusion since this morning. BP ninety-eight over fifty-four, heart rate one-twelve, temp thirty-eight point nine, lactate three point two. We've given a litre of Hartmann's and taken blood cultures. Antibiotics — co-amoxiclav and gentamicin — are ordered but not yet given. Chest X-ray pending. Next of kin aware. Priority is to start antibiotics within the hour and reassess fluid response.`,
     ttsScript:
       "Bed 3 is Mr Reid, seventy-two, from the nursing home. Fever and confusion since this morning. BP ninety-eight over fifty-four, heart rate one-twelve, temp thirty-eight point nine, lactate three point two. We've given a litre of Hartmann's and taken blood cultures. Antibiotics — co-amoxiclav and gentamicin — are ordered but not yet given. Chest X-ray pending. Next of kin aware. Priority is to start antibiotics within the hour and reassess fluid response.",
@@ -283,6 +286,7 @@ Doctor: I'll prescribe prednisolone thirty milligrams daily for five days and do
     title: "Ward briefing: insulin safety",
     specialty: "Diabetes",
     durationSec: 70,
+    audioUrl: "/audio/lis-fb-2.mp3",
     transcript: `Diabetes specialist nurse: Reminder for the medical ward — never abbreviate units as U on insulin prescriptions; write the word units in full. All new insulin starts need a second check by a registered nurse before the first dose. Capillary glucose must be checked within thirty minutes of giving a correction dose. Hypoglycaemia below four millimoles — treat with fifteen grams of rapid-acting carbohydrate and recheck in fifteen minutes.`,
     ttsScript:
       "Reminder for the medical ward — never abbreviate units as U on insulin prescriptions; write the word units in full. All new insulin starts need a second check by a registered nurse before the first dose. Capillary glucose must be checked within thirty minutes of giving a correction dose. Hypoglycaemia below four millimoles — treat with fifteen grams of rapid-acting carbohydrate and recheck in fifteen minutes.",
@@ -307,6 +311,7 @@ Doctor: I'll prescribe prednisolone thirty milligrams daily for five days and do
     title: "Ortho handover: compartment syndrome watch",
     specialty: "Orthopaedics",
     durationSec: 80,
+    audioUrl: "/audio/lis-fb-3.mp3",
     transcript: `SHO: Mrs Khan, bed 7, day zero after tibial nailing. Neurovascular observations every hour for the first twelve hours. Pain out of proportion to the injury, especially on passive stretch of the toes, must be escalated immediately — do not wait for absent pulses. Keep the leg at heart level, not elevated. Analgesia is oral morphine, but escalating opioid need is itself a red flag. Theatre is on standby if compartment pressures are needed.`,
     ttsScript:
       "Mrs Khan, bed 7, day zero after tibial nailing. Neurovascular observations every hour for the first twelve hours. Pain out of proportion to the injury, especially on passive stretch of the toes, must be escalated immediately — do not wait for absent pulses. Keep the leg at heart level, not elevated. Analgesia is oral morphine, but escalating opioid need is itself a red flag. Theatre is on standby if compartment pressures are needed.",
@@ -331,6 +336,7 @@ Doctor: I'll prescribe prednisolone thirty milligrams daily for five days and do
     title: "Obstetrics: CTG escalation policy",
     specialty: "Obstetrics",
     durationSec: 75,
+    audioUrl: "/audio/lis-fb-4.mp3",
     transcript: `Midwife coordinator: For any suspicious CTG lasting more than thirty minutes, or a pathological CTG at any time, inform the obstetric registrar immediately and start intrauterine resuscitation — left lateral position, stop oxytocin, give fluids, and maternal oxygen if saturations are low. Document the time of escalation. Do not leave the woman unattended during this period. Cord prolapse remains a crash call regardless of CTG category.`,
     ttsScript:
       "For any suspicious CTG lasting more than thirty minutes, or a pathological CTG at any time, inform the obstetric registrar immediately and start intrauterine resuscitation — left lateral position, stop oxytocin, give fluids, and maternal oxygen if saturations are low. Document the time of escalation. Do not leave the woman unattended during this period. Cord prolapse remains a crash call regardless of CTG category.",
@@ -355,6 +361,7 @@ Doctor: I'll prescribe prednisolone thirty milligrams daily for five days and do
     title: "Haematology: transfusion reaction alert",
     specialty: "Haematology",
     durationSec: 70,
+    audioUrl: "/audio/lis-fb-5.mp3",
     transcript: `Transfusion practitioner: If a patient develops fever, rigors, back pain or hypotension during a transfusion, stop the transfusion immediately, keep the IV line open with saline, and call for urgent medical review. Check the identity band against the unit label again. Return the unit and giving set to the lab. Do not discard the bag. Observations every fifteen minutes until stable. Document and complete the incident form within twenty-four hours.`,
     ttsScript:
       "If a patient develops fever, rigors, back pain or hypotension during a transfusion, stop the transfusion immediately, keep the IV line open with saline, and call for urgent medical review. Check the identity band against the unit label again. Return the unit and giving set to the lab. Do not discard the bag. Observations every fifteen minutes until stable. Document and complete the incident form within twenty-four hours.",
@@ -379,6 +386,7 @@ Doctor: I'll prescribe prednisolone thirty milligrams daily for five days and do
     title: "Anaesthesia: pre-op fasting reminder",
     specialty: "Anaesthesia",
     durationSec: 65,
+    audioUrl: "/audio/lis-fb-6.mp3",
     transcript: `Consultant anaesthetist: For elective lists tomorrow — clear fluids until two hours before anaesthesia, light meal six hours before. Chewing gum counts as clear fluid in our trust policy. Medications with a sip of water are allowed unless told otherwise. Patients on SGLT2 inhibitors must omit the morning dose and have capillary ketones checked on arrival because of euglycaemic DKA risk. Flag any non-compliance to the anaesthetist before sending for theatre.`,
     ttsScript:
       "For elective lists tomorrow — clear fluids until two hours before anaesthesia, light meal six hours before. Chewing gum counts as clear fluid in our trust policy. Medications with a sip of water are allowed unless told otherwise. Patients on SGLT2 inhibitors must omit the morning dose and have capillary ketones checked on arrival because of euglycaemic DKA risk. Flag any non-compliance to the anaesthetist before sending for theatre.",
@@ -403,6 +411,7 @@ Doctor: I'll prescribe prednisolone thirty milligrams daily for five days and do
     title: "Talk: managing acute upper GI bleed",
     specialty: "Gastroenterology",
     durationSec: 280,
+    audioUrl: "/audio/lis-fc-1.mp3",
     transcript: `Speaker: Good afternoon. Today I'll cover a practical approach to acute upper gastrointestinal bleeding on the medical take. First, assess haemodynamic stability. A systolic blood pressure below ninety, or a heart rate above one hundred and twenty, warrants immediate resuscitation with large-bore IV access and crystalloid, while arranging urgent blood products. The Glasgow-Blatchford score helps triage: a score of zero identifies very low-risk patients who may be suitable for outpatient endoscopy, but anyone scoring six or more should stay in hospital.
 
 Second, reverse anticoagulation thoughtfully. For warfarin with active bleeding, give vitamin K and prothrombin complex concentrate rather than waiting for fresh frozen plasma alone. DOAC-related bleeding may need specific reversal agents where available — idarucizumab for dabigatran, for example — alongside local haemostasis.
@@ -483,6 +492,7 @@ Finally, do not forget Rockall scoring after endoscopy for re-bleed risk, and en
     title: "Talk: heart failure review in primary care",
     specialty: "GP",
     durationSec: 290,
+    audioUrl: "/audio/lis-fc-2.mp3",
     transcript: `Speaker: In this session I'll outline how we structure heart failure reviews in general practice. Start by confirming the phenotype — HFrEF versus HFpEF — because drug eligibility differs. For HFrEF with ejection fraction of forty percent or less, four pillars are now standard: an ACE inhibitor or ARNI, a beta-blocker, a mineralocorticoid receptor antagonist, and an SGLT2 inhibitor, titrated as tolerated.
 
 Monitoring matters. Check renal function and electrolytes within one to two weeks after starting or uptitrating ACE inhibitors, ARNI, or MRAs. A creatinine rise of up to thirty percent from baseline can be acceptable if the patient remains well, but hyperkalaemia above five point five needs action — dose reduction or temporary pause, plus dietary advice.
