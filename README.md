@@ -36,6 +36,12 @@ Open [http://localhost:3000](http://localhost:3000).
 - Expanded Listening / Reading / Writing / Speaking banks
 - SRS deck growth with auto-backfill for existing learners
 
+## Phase 5 — Account, sync, planner
+
+- **`/account`** — profile, badges, backup export/import, Supabase auth + sync
+- **`/planner`** — 7-day plan + `.ics` download for Google/Apple Calendar
+- SQL: `supabase/schema.sql`
+
 ## Skills practice
 
 - Listening, Reading, Writing, Speaking modules
