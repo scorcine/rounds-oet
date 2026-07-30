@@ -59,7 +59,7 @@ export default function HomePage() {
           {[
             { href: "/diagnose", title: "Diagnostic", blurb: "16-question mini-OET placement." },
             { href: "/study", title: "SRS reviews", blurb: "Daily Anki-style card goal." },
-            { href: "/competencies", title: "Competency map", blurb: "See mastery and priorities." },
+            { href: "/exam", title: "Exam mode", blurb: "Timed full set + pacing report." },
           ].map((item, i) => (
             <SkillCard
               key={item.href}
@@ -108,7 +108,7 @@ export default function HomePage() {
           <ul className="space-y-4 text-sm text-paper/75">
             <li className="border-l-2 border-pulse pl-4">Mini-OET diagnostic + competency map</li>
             <li className="border-l-2 border-ward pl-4">Spaced repetition with daily goals</li>
-            <li className="border-l-2 border-amber pl-4">Four skills practice under exam timing</li>
+            <li className="border-l-2 border-amber pl-4">Exam mode with pacing analytics</li>
             <li className="border-l-2 border-scrub pl-4">Same domain models ready for mobile</li>
           </ul>
         </div>

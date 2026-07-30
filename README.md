@@ -17,7 +17,11 @@ Open [http://localhost:3000](http://localhost:3000).
 - **`/diagnose`** — 16-question mini-OET across 4 competencies
 - **`/study`** — SM-2 spaced repetition with daily goals
 - **`/competencies`** — mastery map + weak-area priorities
-- Starter deck (~36 cards) ready to scale toward 2000+
+
+## Phase 2 — Exam mode & analytics
+
+- **`/exam`** — timed full exam (45/60/45/20) with per-question pacing
+- **`/analytics`** — score by subtest, errors by topic, pacing report
 
 ## Skills practice
 
