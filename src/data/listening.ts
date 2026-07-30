@@ -1,6 +1,7 @@
 import type { ListeningExtract } from "@/domain/types";
 import { LISTENING_EXTRACTS_EXTRA } from "./listening-extra";
 import { LISTENING_EXTRACTS_BANK2 } from "./listening-bank2";
+import { LISTENING_EXTRACTS_FULLPAPER } from "./listening-fullpaper";
 
 const LISTENING_EXTRACTS_BASE: ListeningExtract[] = [
   {
@@ -130,4 +131,5 @@ export const LISTENING_EXTRACTS: ListeningExtract[] = [
   ...LISTENING_EXTRACTS_BASE,
   ...LISTENING_EXTRACTS_EXTRA,
   ...LISTENING_EXTRACTS_BANK2,
+  ...LISTENING_EXTRACTS_FULLPAPER,
 ];

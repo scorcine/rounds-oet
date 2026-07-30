@@ -1,5 +1,6 @@
 import type { ReadingPassage } from "@/domain/types";
 import { READING_PASSAGES_EXTRA } from "./reading-extra";
+import { READING_PASSAGES_FULLPAPER } from "./reading-fullpaper";
 
 const READING_PASSAGES_BASE: ReadingPassage[] = [
   {
@@ -121,4 +122,5 @@ Evidence suggests SDM conversations improve adherence when clinicians explicitly
 export const READING_PASSAGES: ReadingPassage[] = [
   ...READING_PASSAGES_BASE,
   ...READING_PASSAGES_EXTRA,
+  ...READING_PASSAGES_FULLPAPER,
 ];

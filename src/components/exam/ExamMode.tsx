@@ -11,7 +11,7 @@ import {
   scoreListeningAnswers,
   scoreReadingAnswers,
 } from "@/lib/exam-store";
-import { getMockExamBlueprint } from "@/data/exam-blueprint";
+import { getMockExamBlueprint, OFFICIAL_TARGETS } from "@/data/exam-blueprint";
 import { heuristicWritingFeedback } from "@/lib/writing-feedback";
 import { heuristicSpeakingFeedback } from "@/lib/speaking-feedback";
 import { formatTime, countWords } from "@/lib/utils";
@@ -91,7 +91,7 @@ export function ExamMode() {
   const listenTimings = useQuestionTimer(activeListenQ, phase === "listening");
 
   const [readIdx, setReadIdx] = useState(0);
-  const [readAnswers, setReadAnswers] = useState<Record<string, number>>({});
+  const [readAnswers, setReadAnswers] = useState<Record<string, string>>({});
   const [activeReadQ, setActiveReadQ] = useState<string | null>(null);
   const readClock = useSectionClock(phase === "reading");
   const readTimings = useQuestionTimer(activeReadQ, phase === "reading");
@@ -376,27 +376,52 @@ export function ExamMode() {
   if (phase === "intro") {
     return (
       <Panel>
-        <h2 className="font-display text-3xl text-ink">Strict mock exam</h2>
+        <h2 className="font-display text-3xl text-ink">Full-paper mock exam</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink/65">
-          Built for serious OET Medicine study: timed sections, limited audio plays, rubric-scored
-          writing, and two speaking role-plays from your transcript. Bands are estimated for
-          practice only — never official.
+          Official-shaped Listening and Reading papers ({OFFICIAL_TARGETS.listeningQuestions} +{" "}
+          {OFFICIAL_TARGETS.readingQuestions} questions), plus one writing letter and two speaking
+          role-plays. Strict timing, limited audio plays, rubric scoring. Bands remain study
+          estimates only.
         </p>
+
+        <div className="mt-6 rounded-xl border border-ink/10 bg-scrub/40 p-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-steel">
+                Paper coverage
+              </p>
+              <p className="mt-1 font-display text-4xl font-bold text-ink">
+                {blueprint.coveragePercent}%
+              </p>
+            </div>
+            <p className="text-right text-sm text-ink/55">
+              L {blueprint.listeningQuestionCount}/{OFFICIAL_TARGETS.listeningQuestions}
+              <br />
+              R {blueprint.readingQuestionCount}/{OFFICIAL_TARGETS.readingQuestions}
+            </p>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink/10">
+            <div
+              className="h-full rounded-full bg-ward"
+              style={{ width: `${blueprint.coveragePercent}%` }}
+            />
+          </div>
+        </div>
+
         <ul className="mt-5 space-y-2 text-sm text-ink/70">
           {blueprint.realismNotes.map((n) => (
             <li key={n}>· {n}</li>
           ))}
         </ul>
         <p className="mt-4 text-xs text-ink/50">
-          When time hits zero the section auto-submits. No transcript in Listening. Target Grade B
-          (~350) is intentionally hard to reach.
+          When time hits zero the section auto-submits. No transcript in Listening.
         </p>
         <button
           type="button"
           onClick={startExam}
           className="mt-8 rounded-md bg-pulse px-5 py-2.5 text-sm font-semibold text-white"
         >
-          Start strict mock
+          Start full-paper mock
         </button>
       </Panel>
     );
@@ -526,19 +551,32 @@ export function ExamMode() {
                 <p className="text-sm font-semibold text-ink">
                   {qi + 1}. {q.prompt}
                 </p>
-                <div className="mt-2 space-y-1">
-                  {q.options.map((opt, i) => (
-                    <label key={opt} className="flex gap-2 text-sm text-ink/80">
-                      <input
-                        type="radio"
-                        name={q.id}
-                        checked={readAnswers[q.id] === i}
-                        onChange={() => setReadAnswers((a) => ({ ...a, [q.id]: i }))}
-                      />
-                      {opt}
-                    </label>
-                  ))}
-                </div>
+                {"options" in q ? (
+                  <div className="mt-2 space-y-1">
+                    {q.options.map((opt, i) => (
+                      <label key={opt} className="flex gap-2 text-sm text-ink/80">
+                        <input
+                          type="radio"
+                          name={q.id}
+                          checked={readAnswers[q.id] === String(i)}
+                          onChange={() =>
+                            setReadAnswers((a) => ({ ...a, [q.id]: String(i) }))
+                          }
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <input
+                    className="mt-2 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm"
+                    value={readAnswers[q.id] ?? ""}
+                    onChange={(e) =>
+                      setReadAnswers((a) => ({ ...a, [q.id]: e.target.value }))
+                    }
+                    placeholder="Answer"
+                  />
+                )}
               </div>
             ))}
           </div>

@@ -115,7 +115,7 @@ export function scoreListeningAnswers(
 }
 
 export function scoreReadingAnswers(
-  answers: Record<string, number>,
+  answers: Record<string, string>,
   timings: Record<string, number>,
   passages: typeof READING_PASSAGES = READING_PASSAGES,
 ): SectionResult {
@@ -126,7 +126,13 @@ export function scoreReadingAnswers(
   for (const passage of passages) {
     for (const q of passage.questions) {
       total += 1;
-      const ok = answers[q.id] === q.correctIndex;
+      const user = answers[q.id] ?? "";
+      let ok = false;
+      if ("options" in q) {
+        ok = Number(user) === q.correctIndex;
+      } else {
+        ok = answersMatch(user, q.answer, q.acceptedAnswers);
+      }
       if (ok) correct += 1;
       questionTimings.push({
         questionId: q.id,
