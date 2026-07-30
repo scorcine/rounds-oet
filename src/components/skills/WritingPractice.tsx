@@ -2,34 +2,51 @@
 
 import { useState } from "react";
 import type { WritingCase } from "@/domain/types";
+import type { WritingFeedback } from "@/domain/feedback";
 import { recordAttempt } from "@/lib/progress";
 import { countWords } from "@/lib/utils";
 import { useCountdown, TimerBadge } from "@/components/Timer";
 import { Panel } from "@/components/ui";
+import { WritingFeedbackPanel } from "@/components/feedback/FeedbackPanels";
 
 export function WritingPractice({ writingCase }: { writingCase: WritingCase }) {
   const [started, setStarted] = useState(false);
   const [letter, setLetter] = useState("");
-  const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [showSample, setShowSample] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<WritingFeedback | null>(null);
+  const [humanQueued, setHumanQueued] = useState(false);
   const timer = useCountdown(writingCase.timeLimitSec, started && !submitted);
   const words = countWords(letter);
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     setSubmitted(true);
-    const checked = writingCase.rubric.filter((r) => checks[r.id]).length;
-    const wordScore =
-      words >= writingCase.wordTarget.min && words <= writingCase.wordTarget.max + 30 ? 1 : 0.6;
-    const rubricScore = checked / writingCase.rubric.length;
-    const scorePercent = Math.round((rubricScore * 0.75 + wordScore * 0.25) * 100);
-    recordAttempt({
-      skill: "writing",
-      contentId: writingCase.id,
-      scorePercent,
-      durationSec: writingCase.timeLimitSec - timer.remaining,
-      details: { words, checked },
-    });
+    setLoading(true);
+    try {
+      const res = await fetch("/api/feedback/writing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId: writingCase.id, letter }),
+      });
+      const data = (await res.json()) as WritingFeedback;
+      setFeedback(data);
+      recordAttempt({
+        skill: "writing",
+        contentId: writingCase.id,
+        scorePercent: data.overallPercent,
+        durationSec: writingCase.timeLimitSec - timer.remaining,
+        details: {
+          words: data.wordCount,
+          grade: data.estimatedGrade,
+          source: data.source,
+        },
+      });
+    } catch {
+      setFeedback(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!started) {
@@ -41,6 +58,10 @@ export function WritingPractice({ writingCase }: { writingCase: WritingCase }) {
           {writingCase.wordTarget.max} words · 40 min
         </p>
         <p className="mt-4 text-sm leading-relaxed text-ink/75">{writingCase.task}</p>
+        <p className="mt-3 text-xs text-ink/45">
+          Phase 3: submit for rubric + estimated band (AI if OPENAI_API_KEY is set, otherwise local
+          engine).
+        </p>
         <button
           type="button"
           onClick={() => setStarted(true)}
@@ -95,58 +116,53 @@ export function WritingPractice({ writingCase }: { writingCase: WritingCase }) {
             <button
               type="button"
               onClick={onSubmit}
-              className="rounded-md bg-pulse px-5 py-2.5 text-sm font-semibold text-white"
+              disabled={letter.trim().length < 20}
+              className="rounded-md bg-pulse px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
             >
-              Finish & self-assess
+              Get AI / rubric feedback
             </button>
+          ) : loading ? (
+            <p className="text-sm text-ink/55">Scoring your letter…</p>
           ) : (
-            <>
-              <Panel>
-                <h3 className="font-display text-xl text-ink">Rubric checklist</h3>
-                <p className="mt-1 text-sm text-ink/60">
-                  Tick what you achieved, then compare with the sample.
-                </p>
-                <ul className="mt-4 space-y-3">
-                  {writingCase.rubric.map((r) => (
-                    <label key={r.id} className="flex items-start gap-3 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={!!checks[r.id]}
-                        onChange={(e) =>
-                          setChecks((c) => ({ ...c, [r.id]: e.target.checked }))
-                        }
-                        className="mt-1"
-                      />
-                      <span>
-                        <span className="font-semibold text-ink">{r.criterion}</span>
-                        <span className="block text-ink/60">{r.description}</span>
-                      </span>
-                    </label>
-                  ))}
-                </ul>
+            feedback && (
+              <>
+                <WritingFeedbackPanel
+                  feedback={feedback}
+                  onRequestHuman={() => {
+                    setHumanQueued(true);
+                    try {
+                      const key = "rounds-oet-human-reviews";
+                      const prev = JSON.parse(localStorage.getItem(key) || "[]") as unknown[];
+                      prev.unshift({
+                        type: "writing",
+                        caseId: writingCase.id,
+                        at: new Date().toISOString(),
+                      });
+                      localStorage.setItem(key, JSON.stringify(prev.slice(0, 20)));
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                />
+                {humanQueued && (
+                  <p className="text-sm text-ward">Human review queued (demo credits).</p>
+                )}
                 <button
                   type="button"
-                  onClick={onSubmit}
-                  className="mt-4 rounded-md border border-ink/15 px-4 py-2 text-sm font-medium"
+                  onClick={() => setShowSample((v) => !v)}
+                  className="text-sm font-semibold text-ward underline-offset-2 hover:underline"
                 >
-                  Save score to Progress
+                  {showSample ? "Hide sample letter" : "Show sample letter"}
                 </button>
-              </Panel>
-              <button
-                type="button"
-                onClick={() => setShowSample((v) => !v)}
-                className="text-sm font-semibold text-ward underline-offset-2 hover:underline"
-              >
-                {showSample ? "Hide sample letter" : "Show sample letter"}
-              </button>
-              {showSample && (
-                <Panel className="bg-scrub/50">
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink/80">
-                    {writingCase.sampleLetter}
-                  </pre>
-                </Panel>
-              )}
-            </>
+                {showSample && (
+                  <Panel className="bg-scrub/50">
+                    <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink/80">
+                      {writingCase.sampleLetter}
+                    </pre>
+                  </Panel>
+                )}
+              </>
+            )
           )}
         </div>
       </div>

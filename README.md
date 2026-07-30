@@ -23,6 +23,13 @@ Open [http://localhost:3000](http://localhost:3000).
 - **`/exam`** — timed full exam (45/60/45/20) with per-question pacing
 - **`/analytics`** — score by subtest, errors by topic, pacing report
 
+## Phase 3 — AI feedback
+
+- Writing: rubric bands + estimated grade via `/api/feedback/writing`
+- Speaking: Intelligibility / Fluency / Appropriateness / Resources + clarity flags
+- Set `OPENAI_API_KEY` in `.env.local` for AI; otherwise local heuristic engine runs
+- Optional “human review” credit queue (demo)
+
 ## Skills practice
 
 - Listening, Reading, Writing, Speaking modules

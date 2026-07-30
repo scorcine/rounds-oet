@@ -109,7 +109,7 @@ export default function HomePage() {
             <li className="border-l-2 border-pulse pl-4">Mini-OET diagnostic + competency map</li>
             <li className="border-l-2 border-ward pl-4">Spaced repetition with daily goals</li>
             <li className="border-l-2 border-amber pl-4">Exam mode with pacing analytics</li>
-            <li className="border-l-2 border-scrub pl-4">Same domain models ready for mobile</li>
+            <li className="border-l-2 border-scrub pl-4">Writing & Speaking AI feedback</li>
           </ul>
         </div>
       </section>
