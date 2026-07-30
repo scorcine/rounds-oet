@@ -1,5 +1,6 @@
 import type { WritingCase } from "@/domain/types";
 import { WRITING_CASES_EXTRA } from "./writing-extra";
+import { WRITING_CASES_BANK2 } from "./writing-bank2";
 
 const WRITING_CASES_BASE: WritingCase[] = [
   {
@@ -174,4 +175,5 @@ Respiratory Team`,
 export const WRITING_CASES: WritingCase[] = [
   ...WRITING_CASES_BASE,
   ...WRITING_CASES_EXTRA,
+  ...WRITING_CASES_BANK2,
 ];

@@ -1,5 +1,6 @@
 import type { SpeakingRolePlay } from "@/domain/types";
 import { SPEAKING_ROLEPLAYS_EXTRA } from "./speaking-extra";
+import { SPEAKING_ROLEPLAYS_BANK2 } from "./speaking-bank2";
 
 const SPEAKING_ROLEPLAYS_BASE: SpeakingRolePlay[] = [
   {
@@ -99,4 +100,5 @@ TASK
 export const SPEAKING_ROLEPLAYS: SpeakingRolePlay[] = [
   ...SPEAKING_ROLEPLAYS_BASE,
   ...SPEAKING_ROLEPLAYS_EXTRA,
+  ...SPEAKING_ROLEPLAYS_BANK2,
 ];

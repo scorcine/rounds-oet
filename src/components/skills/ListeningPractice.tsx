@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ListeningExtract, ChoiceQuestion, GapQuestion } from "@/domain/types";
 import { answersMatch } from "@/domain/skills";
 import { recordAttempt } from "@/lib/progress";
@@ -12,13 +12,24 @@ function isChoice(q: ChoiceQuestion | GapQuestion): q is ChoiceQuestion {
 }
 
 export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const timer = useCountdown(extract.durationSec + 60, playing || submitted === false);
+  const hasFile = Boolean(extract.audioUrl);
 
-  const speak = () => {
+  const stop = () => {
+    window.speechSynthesis?.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPlaying(false);
+  };
+
+  const speakTts = () => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(extract.ttsScript);
@@ -28,9 +39,26 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
     window.speechSynthesis.speak(u);
   };
 
-  const stop = () => {
-    window.speechSynthesis?.cancel();
-    setPlaying(false);
+  const play = () => {
+    if (playing) {
+      stop();
+      return;
+    }
+    if (hasFile && extract.audioUrl) {
+      const el = audioRef.current;
+      if (!el) {
+        speakTts();
+        return;
+      }
+      el.onended = () => setPlaying(false);
+      el.onerror = () => {
+        setPlaying(false);
+        speakTts();
+      };
+      void el.play().then(() => setPlaying(true)).catch(() => speakTts());
+      return;
+    }
+    speakTts();
   };
 
   const result = useMemo(() => {
@@ -71,27 +99,37 @@ export function ListeningPractice({ extract }: { extract: ListeningExtract }) {
 
   return (
     <div className="space-y-6">
+      {extract.audioUrl ? (
+        <audio ref={audioRef} src={extract.audioUrl} preload="metadata" className="hidden" />
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-3">
         <TimerBadge label={timer.label} />
         <span className="rounded-md bg-ward/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-ward">
           Part {extract.part}
         </span>
         <span className="text-sm text-ink/55">{extract.specialty}</span>
+        {hasFile ? (
+          <span className="rounded-md bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink/60">
+            Studio audio
+          </span>
+        ) : null}
       </div>
 
       <Panel>
         <h2 className="font-display text-2xl text-ink">{extract.title}</h2>
         <p className="mt-2 text-sm text-ink/60">
-          Play the consultation (browser voice). Answer while listening — exam style. Transcript is
-          optional for review.
+          {hasFile
+            ? "Play the recorded consultation. Answer while listening — exam style. Transcript is optional for review."
+            : "Play the consultation (browser voice). Answer while listening — exam style. Transcript is optional for review."}
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={playing ? stop : speak}
+            onClick={play}
             className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper"
           >
-            {playing ? "Stop audio" : "Play audio (TTS)"}
+            {playing ? "Stop audio" : hasFile ? "Play audio" : "Play audio (TTS)"}
           </button>
           <button
             type="button"

@@ -1,5 +1,6 @@
 import type { ListeningExtract } from "@/domain/types";
 import { LISTENING_EXTRACTS_EXTRA } from "./listening-extra";
+import { LISTENING_EXTRACTS_BANK2 } from "./listening-bank2";
 
 const LISTENING_EXTRACTS_BASE: ListeningExtract[] = [
   {
@@ -128,4 +129,5 @@ Doctor: I'd like to do an ECG and some blood tests today, including troponin. We
 export const LISTENING_EXTRACTS: ListeningExtract[] = [
   ...LISTENING_EXTRACTS_BASE,
   ...LISTENING_EXTRACTS_EXTRA,
+  ...LISTENING_EXTRACTS_BANK2,
 ];

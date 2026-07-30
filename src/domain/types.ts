@@ -31,6 +31,8 @@ export interface ListeningExtract {
   transcript: string;
   /** Spoken script segments for browser TTS when no audio file exists */
   ttsScript: string;
+  /** Optional original MP3/WAV under /public (never copyrighted film audio) */
+  audioUrl?: string;
   questions: (ChoiceQuestion | GapQuestion)[];
 }
 
