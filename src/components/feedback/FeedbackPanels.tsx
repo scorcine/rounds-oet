@@ -1,8 +1,9 @@
 "use client";
 
 import type { WritingFeedback, SpeakingFeedback } from "@/domain/feedback";
-import { gradeLabel } from "@/domain/skills";
+import { gradeLabel, percentToScore } from "@/domain/skills";
 import { Panel } from "@/components/ui";
+import { EstimatedBandDisclaimer } from "@/components/band/EstimatedBandReport";
 
 export function WritingFeedbackPanel({
   feedback,
@@ -21,12 +22,16 @@ export function WritingFeedbackPanel({
             </p>
             <p className="mt-2 font-display text-5xl">{feedback.overallPercent}%</p>
             <p className="mt-1 text-sm text-paper/65">
-              Estimated {gradeLabel(feedback.estimatedGrade)} · {feedback.wordCount} words
+              Estimated {gradeLabel(feedback.estimatedGrade)} · ≈{" "}
+              {percentToScore(feedback.overallPercent)}/500 · {feedback.wordCount} words
               {feedback.wordTargetMet ? "" : " (outside target)"}
             </p>
+            <p className="mt-1 text-xs text-paper/45">Estimated · not official</p>
           </div>
         </div>
       </Panel>
+
+      <EstimatedBandDisclaimer />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {feedback.rubric.map((r) => (
@@ -113,9 +118,13 @@ export function SpeakingFeedbackPanel({
         </p>
         <p className="mt-2 font-display text-5xl">{feedback.overallPercent}%</p>
         <p className="mt-1 text-sm text-paper/65">
-          Estimated {gradeLabel(feedback.estimatedGrade)}
+          Estimated {gradeLabel(feedback.estimatedGrade)} · ≈{" "}
+          {percentToScore(feedback.overallPercent)}/500
         </p>
+        <p className="mt-1 text-xs text-paper/45">Estimated · not official</p>
       </Panel>
+
+      <EstimatedBandDisclaimer />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {feedback.criteria.map((c) => (

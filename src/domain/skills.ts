@@ -45,27 +45,101 @@ export const SKILL_META: Record<
   },
 };
 
-/** Rough mapping used for progress UI (not official OET conversion). */
+/** Official OET grade → numerical score bands (public scale). */
+export const GRADE_SCORE_RANGE: Record<
+  OetGrade,
+  { min: number; max: number; centre: number }
+> = {
+  A: { min: 450, max: 500, centre: 475 },
+  B: { min: 350, max: 440, centre: 395 },
+  "C+": { min: 300, max: 340, centre: 320 },
+  C: { min: 200, max: 290, centre: 245 },
+  D: { min: 100, max: 190, centre: 145 },
+  E: { min: 0, max: 90, centre: 45 },
+};
+
+/**
+ * Practice % → estimated grade.
+ * Calibrated conservatively toward Medicine registration targets (often Grade B / ~350).
+ * Not an official OET conversion — forms are equated and cut-scores are not published as %.
+ */
 export function percentToGrade(percent: number): OetGrade {
-  if (percent >= 90) return "A";
-  if (percent >= 80) return "B";
-  if (percent >= 70) return "C+";
-  if (percent >= 60) return "C";
-  if (percent >= 45) return "D";
+  const p = Math.max(0, Math.min(100, percent));
+  if (p >= 88) return "A";
+  if (p >= 75) return "B";
+  if (p >= 65) return "C+";
+  if (p >= 55) return "C";
+  if (p >= 40) return "D";
   return "E";
 }
 
+/** Map practice % into an approximate 0–500 score inside the estimated grade band. */
+export function percentToScore(percent: number): number {
+  const p = Math.max(0, Math.min(100, percent));
+  const grade = percentToGrade(p);
+  const { min, max } = GRADE_SCORE_RANGE[grade];
+  const floors: Record<OetGrade, number> = {
+    A: 88,
+    B: 75,
+    "C+": 65,
+    C: 55,
+    D: 40,
+    E: 0,
+  };
+  const ceilings: Record<OetGrade, number> = {
+    A: 100,
+    B: 88,
+    "C+": 75,
+    C: 65,
+    D: 55,
+    E: 40,
+  };
+  const lo = floors[grade];
+  const hi = ceilings[grade];
+  const t = hi === lo ? 1 : (p - lo) / (hi - lo);
+  return Math.round(min + Math.max(0, Math.min(1, t)) * (max - min));
+}
+
 export function gradeLabel(grade: OetGrade): string {
+  const r = GRADE_SCORE_RANGE[grade];
+  return `${grade} · ${r.min}–${r.max}`;
+}
+
+export function gradeDescriptor(grade: OetGrade): string {
   const map: Record<OetGrade, string> = {
-    A: "A · 450+",
-    B: "B · 350–440",
-    "C+": "C+ · 300–340",
-    C: "C · 200–290",
-    D: "D · 100–190",
-    E: "E · 0–90",
+    A: "Very high level of performance",
+    B: "High level — typical registration target for many boards",
+    "C+": "Good performance — just below many B cut-offs",
+    C: "Competent in some areas; needs stronger consistency",
+    D: "Limited performance for healthcare workplace English",
+    E: "Low performance — build foundations first",
   };
   return map[grade];
 }
+
+/** Grade order for comparisons (higher index = stronger). */
+export const GRADE_RANK: Record<OetGrade, number> = {
+  E: 0,
+  D: 1,
+  C: 2,
+  "C+": 3,
+  B: 4,
+  A: 5,
+};
+
+export function minGrade(grades: OetGrade[]): OetGrade | null {
+  if (!grades.length) return null;
+  return grades.reduce((worst, g) =>
+    GRADE_RANK[g] < GRADE_RANK[worst] ? g : worst,
+  );
+}
+
+export function meetsTarget(estimated: OetGrade, target: OetGrade): boolean {
+  return GRADE_RANK[estimated] >= GRADE_RANK[target];
+}
+
+export const ESTIMATED_BAND_DISCLAIMER =
+  "Estimated practice band only — not an official OET result. Only the official OET test can award grades A–E.";
 
 export function normalizeAnswer(value: string): string {
   return value

@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Skill, UserProgress } from "@/domain/types";
 import type { StudyState } from "@/domain/study";
 import { SKILL_META, percentToGrade, gradeLabel } from "@/domain/skills";
 import { DEFAULT_PROGRESS, loadProgress, overallReadiness, skillStats } from "@/lib/progress";
 import { DEFAULT_STUDY, loadStudy, getDueQueue, dailyRemaining } from "@/lib/study-store";
+import { buildPracticeBandReport } from "@/lib/band-report";
+import { EstimatedBandReport } from "@/components/band/EstimatedBandReport";
 import { PageHero, Panel } from "@/components/ui";
 
 const SKILLS: Skill[] = ["listening", "reading", "writing", "speaking"];
@@ -23,15 +25,18 @@ export default function ProgressPage() {
   const readiness = overallReadiness(progress);
   const due = getDueQueue(study).length;
   const remaining = dailyRemaining(study);
+  const bandReport = useMemo(() => buildPracticeBandReport(progress), [progress]);
 
   return (
     <div>
       <PageHero
         eyebrow="Progress"
         title="Your practice pulse"
-        description="Skills attempts and SRS study live on this device. Cloud sync comes later with accounts."
+        description="Estimated bands from your attempts — useful for study planning, not an official OET result."
       />
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-12 sm:px-6">
+        <EstimatedBandReport report={bandReport} title="Estimated OET band" />
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Panel className="bg-ink text-paper">
             <p className="text-xs uppercase tracking-[0.18em] text-scrub/80">Skills readiness</p>
@@ -75,6 +80,7 @@ export default function ProgressPage() {
           {SKILLS.map((skill) => {
             const stats = skillStats(progress, skill);
             const meta = SKILL_META[skill];
+            const band = bandReport.skills.find((s) => s.skill === skill);
             return (
               <Panel key={skill}>
                 <div className="flex items-center justify-between">
@@ -95,12 +101,17 @@ export default function ProgressPage() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-ink/50">Best ≈</dt>
+                    <dt className="text-ink/50">Est. band</dt>
                     <dd className="text-lg font-semibold text-ink">
-                      {stats.best == null ? "—" : percentToGrade(stats.best)}
+                      {band?.grade ?? (stats.best == null ? "—" : percentToGrade(stats.best))}
                     </dd>
                   </div>
                 </dl>
+                {band?.score != null && (
+                  <p className="mt-3 text-xs text-ink/50">
+                    ≈ {band.score}/500 · Estimated · not official
+                  </p>
+                )}
               </Panel>
             );
           })}
@@ -122,7 +133,10 @@ export default function ProgressPage() {
                       {a.contentId} · {new Date(a.completedAt).toLocaleString()}
                     </p>
                   </div>
-                  <p className="font-mono text-ink">{a.scorePercent}%</p>
+                  <div className="text-right">
+                    <p className="font-mono text-ink">{a.scorePercent}%</p>
+                    <p className="text-xs text-ink/45">≈ {percentToGrade(a.scorePercent)}</p>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -17,6 +17,9 @@ import {
 } from "@/lib/exam-store";
 import { formatTime, countWords } from "@/lib/utils";
 import { Panel } from "@/components/ui";
+import { buildExamBandReport } from "@/lib/band-report";
+import { EstimatedBandReport } from "@/components/band/EstimatedBandReport";
+import { percentToGrade } from "@/domain/skills";
 
 type Phase =
   | "intro"
@@ -397,8 +400,14 @@ export function ExamMode() {
 
   // results
   if (!attempt) return null;
+  const bandReport = buildExamBandReport(attempt, "B");
   return (
     <div className="space-y-6">
+      <EstimatedBandReport
+        report={bandReport}
+        title="Estimated OET band · this mock"
+      />
+
       <Panel className="bg-ink text-paper">
         <p className="text-xs uppercase tracking-[0.2em] text-scrub/80">Exam complete</p>
         <p className="mt-2 font-display text-5xl">{attempt.overallPercent}%</p>
@@ -413,6 +422,11 @@ export function ExamMode() {
             <p className="text-xs uppercase tracking-[0.18em] text-ward">{s.skill}</p>
             <p className="mt-1 font-display text-3xl text-ink">
               {s.scorePercent == null ? "—" : `${s.scorePercent}%`}
+            </p>
+            <p className="mt-1 text-sm text-ink/55">
+              {s.scorePercent == null
+                ? "Unscored"
+                : `Est. ${percentToGrade(s.scorePercent)} · not official`}
             </p>
             <p className="mt-1 text-sm text-ink/55">
               {formatTime(s.usedSec)} used / {formatTime(s.allocatedSec)} ·{" "}
@@ -468,6 +482,12 @@ export function ExamMode() {
           className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper"
         >
           Open analytics
+        </Link>
+        <Link
+          href="/progress"
+          className="rounded-md border border-ink/15 px-4 py-2 text-sm font-semibold"
+        >
+          Progress & bands
         </Link>
         <button
           type="button"
