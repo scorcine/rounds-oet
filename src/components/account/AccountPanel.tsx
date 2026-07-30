@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { SyncPayload } from "@/domain/account";
 import { BADGE_DEFS } from "@/domain/account";
@@ -11,6 +11,7 @@ import {
   mergePayloads,
 } from "@/lib/sync-payload";
 import { evaluateBadges, loadBadges, saveBadges } from "@/lib/badges";
+import { runCloudSync } from "@/lib/cloud-sync";
 import { PageHero, Panel } from "@/components/ui";
 
 function cloudReady() {
@@ -29,7 +30,7 @@ export function AccountPanel() {
   const [busy, setBusy] = useState(false);
   const ready = cloudReady();
 
-  const refreshLocal = () => {
+  const refreshLocal = useCallback(() => {
     const profileRaw = localStorage.getItem("rounds-oet-profile-v1");
     if (profileRaw) {
       try {
@@ -43,7 +44,20 @@ export function AccountPanel() {
     const unlocked = evaluateBadges(payload);
     saveBadges(unlocked);
     setBadges(unlocked);
-  };
+  }, [displayName]);
+
+  const autoSync = useCallback(
+    async (label = "Synced automatically with the cloud.") => {
+      setBusy(true);
+      setStatus("Syncing…");
+      const result = await runCloudSync(displayName);
+      setStatus(result.ok ? label : result.message);
+      if (result.ok) refreshLocal();
+      setBusy(false);
+      return result.ok;
+    },
+    [displayName, refreshLocal],
+  );
 
   useEffect(() => {
     refreshLocal();
@@ -55,9 +69,16 @@ export function AccountPanel() {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         const { data } = await supabase.auth.getSession();
-        setUserEmail(data.session?.user?.email ?? null);
-        const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+        const emailNow = data.session?.user?.email ?? null;
+        setUserEmail(emailNow);
+        if (emailNow) {
+          void autoSync("Welcome back — progress synced automatically.");
+        }
+        const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
           setUserEmail(session?.user?.email ?? null);
+          if (event === "SIGNED_IN" && session) {
+            void autoSync("Signed in — progress synced automatically.");
+          }
         });
         unsubscribe = () => sub.subscription.unsubscribe();
       } catch {
@@ -66,8 +87,7 @@ export function AccountPanel() {
     })();
 
     return () => unsubscribe?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready]);
+  }, [ready, autoSync, refreshLocal]);
 
   const saveProfile = () => {
     localStorage.setItem(
@@ -76,6 +96,7 @@ export function AccountPanel() {
     );
     setStatus("Profile saved on this device.");
     refreshLocal();
+    if (userEmail) void autoSync("Profile saved and synced.");
   };
 
   const register = async () => {
@@ -95,7 +116,7 @@ export function AccountPanel() {
         return;
       }
       setUserEmail(data.session.user.email ?? email);
-      setStatus("Account created and signed in. Click Sync now.");
+      await autoSync("Account created — progress synced automatically.");
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Sign up failed");
     } finally {
@@ -114,7 +135,7 @@ export function AccountPanel() {
       if (error) throw error;
       if (!data.session) throw new Error("No session after sign in — check email confirmation settings.");
       setUserEmail(data.session.user.email ?? email);
-      setStatus("Signed in. Click Sync now to merge cloud ↔ this device.");
+      await autoSync("Signed in — progress synced automatically.");
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Sign in failed");
     } finally {
@@ -131,56 +152,6 @@ export function AccountPanel() {
     setStatus("Signed out.");
   };
 
-  const syncNow = async () => {
-    if (!ready) return;
-    setBusy(true);
-    setStatus("Syncing…");
-    try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-      if (!user) {
-        throw new Error(
-          "No active session. Sign out, then Sign in again (and disable Confirm email in Supabase if needed).",
-        );
-      }
-
-      const local = collectLocalPayload(displayName);
-      local.badgesUnlocked = evaluateBadges(local);
-
-      const { data: row, error: readError } = await supabase
-        .from("sync_blobs")
-        .select("payload, updated_at")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (readError) throw readError;
-
-      let merged: SyncPayload = local;
-      if (row?.payload) {
-        merged = mergePayloads(local, row.payload);
-      }
-      merged.displayName = displayName;
-      merged.badgesUnlocked = evaluateBadges(merged);
-      merged.updatedAt = new Date().toISOString();
-
-      const { error } = await supabase.from("sync_blobs").upsert({
-        user_id: user.id,
-        payload: merged,
-        updated_at: merged.updatedAt,
-      });
-      if (error) throw error;
-
-      applyLocalPayload(merged);
-      setBadges(merged.badgesUnlocked);
-      setStatus("Sync complete — progress merged and saved to the cloud.");
-    } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Sync failed");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const onImport = async (file: File) => {
     const text = await file.text();
     const payload = JSON.parse(text) as SyncPayload;
@@ -190,6 +161,7 @@ export function AccountPanel() {
     applyLocalPayload(merged);
     setBadges(merged.badgesUnlocked);
     setStatus("Backup imported and merged.");
+    if (userEmail) void autoSync("Backup imported and synced to the cloud.");
   };
 
   return (
@@ -197,7 +169,7 @@ export function AccountPanel() {
       <PageHero
         eyebrow="Phase 5 · Account & sync"
         title="Your Rounds account"
-        description="Keep diagnostic, SRS, exams and badges with you across devices. Cloud sync uses Supabase when configured; backup export always works."
+        description="Progress syncs automatically when you sign in. Studying while logged in also pushes updates to the cloud in the background."
       />
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:px-6">
@@ -225,16 +197,6 @@ export function AccountPanel() {
           {!ready ? (
             <div className="mt-3 space-y-2 text-sm text-ink/70">
               <p>Supabase is not configured yet. Local study still works.</p>
-              <ol className="list-decimal space-y-1 pl-5">
-                <li>Create a free project at supabase.com</li>
-                <li>Run SQL from <code className="text-xs">supabase/schema.sql</code></li>
-                <li>
-                  Add <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-                  <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
-                  <code className="text-xs">.env.local</code> and Vercel
-                </li>
-                <li>Redeploy, then return here to register</li>
-              </ol>
               <Link href="/planner" className="inline-block font-semibold text-ward">
                 Open study planner →
               </Link>
@@ -242,9 +204,14 @@ export function AccountPanel() {
           ) : (
             <div className="mt-4 space-y-3">
               {userEmail ? (
-                <p className="text-sm text-ink/70">
-                  Signed in as <span className="font-semibold text-ink">{userEmail}</span>
-                </p>
+                <>
+                  <p className="text-sm text-ink/70">
+                    Signed in as <span className="font-semibold text-ink">{userEmail}</span>
+                  </p>
+                  <p className="text-xs text-ink/50">
+                    Auto-sync is on — no need to click sync after studying.
+                  </p>
+                </>
               ) : (
                 <>
                   <input
@@ -288,10 +255,10 @@ export function AccountPanel() {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={syncNow}
-                      className="rounded-md bg-pulse px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                      onClick={() => void autoSync("Manual sync complete.")}
+                      className="rounded-md border border-ink/15 px-4 py-2 text-sm font-semibold disabled:opacity-50"
                     >
-                      Sync now
+                      Sync again
                     </button>
                     <button
                       type="button"
@@ -312,7 +279,7 @@ export function AccountPanel() {
         <Panel>
           <h2 className="font-display text-2xl text-ink">Backup</h2>
           <p className="mt-2 text-sm text-ink/65">
-            Export/import a JSON backup to move progress between browsers before cloud is ready.
+            Optional JSON export/import as an extra safety copy.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button

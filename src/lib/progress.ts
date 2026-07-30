@@ -51,6 +51,7 @@ export function loadProgress(): UserProgress {
 export function saveProgress(progress: UserProgress): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  void import("@/lib/cloud-sync").then((m) => m.scheduleCloudSync());
 }
 
 export function recordAttempt(

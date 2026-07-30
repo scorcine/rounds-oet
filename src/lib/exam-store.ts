@@ -30,6 +30,7 @@ export function saveExamAttempt(attempt: ExamAttempt): ExamAttempt[] {
   const prev = loadExamAttempts();
   const next = [attempt, ...prev].slice(0, 30);
   localStorage.setItem(EXAM_KEY, JSON.stringify(next));
+  void import("@/lib/cloud-sync").then((m) => m.scheduleCloudSync());
   return next;
 }
 

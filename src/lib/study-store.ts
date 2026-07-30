@@ -75,6 +75,7 @@ function ensureDeckCards(state: StudyState): StudyState {
 export function saveStudy(state: StudyState): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STUDY_KEY, JSON.stringify(state));
+  void import("@/lib/cloud-sync").then((m) => m.scheduleCloudSync());
 }
 
 export function scoreDiagnostic(
