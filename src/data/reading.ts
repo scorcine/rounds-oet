@@ -1,6 +1,8 @@
 import type { ReadingPassage } from "@/domain/types";
 import { READING_PASSAGES_EXTRA } from "./reading-extra";
 import { READING_PASSAGES_FULLPAPER } from "./reading-fullpaper";
+import { READING_PASSAGES_FULLPAPER_2 } from "./reading-fullpaper-2";
+import { READING_PASSAGES_FULLPAPER_3 } from "./reading-fullpaper-3";
 
 const READING_PASSAGES_BASE: ReadingPassage[] = [
   {
@@ -123,4 +125,6 @@ export const READING_PASSAGES: ReadingPassage[] = [
   ...READING_PASSAGES_BASE,
   ...READING_PASSAGES_EXTRA,
   ...READING_PASSAGES_FULLPAPER,
+  ...READING_PASSAGES_FULLPAPER_2,
+  ...READING_PASSAGES_FULLPAPER_3,
 ];
