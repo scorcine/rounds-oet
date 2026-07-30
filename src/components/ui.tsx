@@ -50,11 +50,18 @@ export function PageHero({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden border-b border-ink/10 bg-steel text-paper">
-      <div className="pointer-events-none absolute inset-0 tech-grid opacity-40" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,214,192,0.18),transparent_50%)]" />
+    <div className="relative overflow-hidden border-b border-white/10 bg-ink text-paper">
+      <div className="pointer-events-none absolute inset-0 tech-grid-dense opacity-50" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,214,192,0.22),transparent_48%)]" />
+      <div className="pointer-events-none absolute -right-20 top-0 h-full w-1/3 bg-[radial-gradient(ellipse_at_center,rgba(255,61,46,0.12),transparent_60%)]" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-ward/50 to-transparent" />
       <div className="relative mx-auto flex max-w-6xl flex-col gap-4 px-4 py-12 sm:px-6 sm:py-16">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-ward">{eyebrow}</p>
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ward" />
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-ward">
+            {eyebrow}
+          </p>
+        </div>
         <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.02] sm:text-5xl">
           {title}
         </h1>
@@ -75,7 +82,8 @@ export function Panel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-ink/10 bg-white p-5 shadow-[0_1px_0_rgba(7,17,26,0.04)] sm:p-6",
+        "relative overflow-hidden rounded-xl border border-ink/10 bg-white/90 p-5 shadow-[0_1px_0_rgba(7,17,26,0.04)] backdrop-blur-sm sm:p-6",
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-ward/40 before:to-transparent",
         className,
       )}
     >

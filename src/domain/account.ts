@@ -17,56 +17,65 @@ export interface BadgeDef {
   title: string;
   description: string;
   icon: string;
+  tier: "signal" | "core" | "elite";
 }
 
 export const BADGE_DEFS: BadgeDef[] = [
   {
     id: "first-diagnostic",
-    title: "Placement done",
+    title: "Placement lock",
     description: "Complete the mini-OET diagnostic.",
-    icon: "1",
+    icon: "01",
+    tier: "signal",
   },
   {
     id: "streak-3",
-    title: "3-day streak",
+    title: "3-day uplink",
     description: "Practise on 3 consecutive days.",
-    icon: "3",
+    icon: "03",
+    tier: "signal",
   },
   {
     id: "streak-7",
-    title: "Week warrior",
+    title: "Week protocol",
     description: "Keep a 7-day study streak.",
-    icon: "7",
+    icon: "07",
+    tier: "core",
   },
   {
     id: "xp-100",
-    title: "First 100 XP",
+    title: "XP boot",
     description: "Earn 100 XP from SRS reviews.",
     icon: "XP",
+    tier: "signal",
   },
   {
     id: "xp-500",
-    title: "500 XP club",
+    title: "XP cluster",
     description: "Earn 500 XP total.",
     icon: "★",
+    tier: "core",
   },
   {
     id: "exam-1",
-    title: "Exam starter",
+    title: "Mock online",
     description: "Finish one full timed exam.",
-    icon: "E",
+    icon: "EX",
+    tier: "core",
   },
   {
     id: "writing-b",
-    title: "Writing Band B+",
-    description: "Score 80%+ on a writing task.",
+    title: "Writing B track",
+    description: "Hit 80%+ on a writing task (study estimate ≈ Grade B).",
     icon: "W",
+    tier: "elite",
   },
   {
     id: "speaking-b",
-    title: "Speaking Band B+",
-    description: "Score 80%+ on a speaking task.",
+    title: "Speaking B track",
+    description: "Hit 80%+ on a speaking task (study estimate ≈ Grade B).",
     icon: "S",
+    tier: "elite",
   },
 ];
 

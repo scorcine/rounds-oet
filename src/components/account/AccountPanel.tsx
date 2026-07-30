@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { SyncPayload } from "@/domain/account";
-import { BADGE_DEFS } from "@/domain/account";
 import {
   applyLocalPayload,
   collectLocalPayload,
@@ -13,6 +12,7 @@ import {
 import { evaluateBadges, loadBadges, saveBadges } from "@/lib/badges";
 import { runCloudSync } from "@/lib/cloud-sync";
 import { PageHero, Panel } from "@/components/ui";
+import { BadgesBoard } from "@/components/account/BadgesBoard";
 
 function cloudReady() {
   return Boolean(
@@ -172,7 +172,7 @@ export function AccountPanel() {
         description="Progress syncs automatically when you sign in. Studying while logged in also pushes updates to the cloud in the background."
       />
 
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-10 sm:px-6">
         <Panel>
           <h2 className="font-display text-2xl text-ink">Profile</h2>
           <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.16em] text-ward">
@@ -304,31 +304,10 @@ export function AccountPanel() {
           </div>
         </Panel>
 
-        <Panel>
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-2xl text-ink">Badges</h2>
-            <button type="button" onClick={refreshLocal} className="text-sm font-semibold text-ward">
-              Refresh
-            </button>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {BADGE_DEFS.map((b) => {
-              const on = badges.includes(b.id) || loadBadges().includes(b.id);
-              return (
-                <div
-                  key={b.id}
-                  className={`rounded-xl border px-3 py-3 ${
-                    on ? "border-ward/40 bg-scrub/50" : "border-ink/10 opacity-50"
-                  }`}
-                >
-                  <p className="font-mono text-xs text-ward">{b.icon}</p>
-                  <p className="font-semibold text-ink">{b.title}</p>
-                  <p className="text-xs text-ink/60">{b.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </Panel>
+        <BadgesBoard
+          unlockedIds={[...new Set([...badges, ...loadBadges()])]}
+          onRefresh={refreshLocal}
+        />
       </div>
     </div>
   );

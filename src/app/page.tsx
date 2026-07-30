@@ -47,12 +47,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-paper px-4 py-20 sm:px-6">
-        <div className="mx-auto max-w-6xl">
+      <section className="relative overflow-hidden bg-paper px-4 py-20 sm:px-6">
+        <div className="pointer-events-none absolute inset-0 tech-grid opacity-40" />
+        <div className="relative mx-auto max-w-6xl">
           <div className="max-w-2xl">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-steel">
-              Product loop
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-ward" />
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.28em] text-steel">
+                Product loop
+              </p>
+            </div>
             <h2 className="mt-3 font-display text-4xl font-bold text-ink md:text-5xl">
               Diagnose. Drill. Dominate the exam.
             </h2>

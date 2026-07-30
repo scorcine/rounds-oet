@@ -31,7 +31,10 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 90% 50% at 100% -10%, rgba(0, 214, 192, 0.07), transparent 50%),
+    radial-gradient(ellipse 60% 40% at -10% 30%, rgba(26, 42, 58, 0.06), transparent 45%),
+    var(--paper);
   color: var(--foreground);
   font-family: var(--font-body), system-ui, sans-serif;
 }
@@ -76,6 +79,25 @@ body {
   }
 }
 
+@keyframes badge-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(0, 214, 192, 0.35), 0 0 24px -8px rgba(0, 214, 192, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(0, 214, 192, 0.55), 0 0 36px -4px rgba(0, 214, 192, 0.65);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -120% 0;
+  }
+  100% {
+    background-position: 120% 0;
+  }
+}
+
 .animate-rise {
   animation: rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -88,11 +110,22 @@ body {
   animation: pulse-line 2.4s ease-in-out infinite;
 }
 
+.animate-badge-glow {
+  animation: badge-glow 2.8s ease-in-out infinite;
+}
+
 .tech-grid {
   background-image:
     linear-gradient(rgba(0, 214, 192, 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 214, 192, 0.07) 1px, transparent 1px);
   background-size: 56px 56px;
+}
+
+.tech-grid-dense {
+  background-image:
+    linear-gradient(rgba(0, 214, 192, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 214, 192, 0.09) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 .hero-mesh {
@@ -101,4 +134,49 @@ body {
     radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255, 61, 46, 0.14), transparent 50%),
     radial-gradient(ellipse 40% 30% at 50% 50%, rgba(26, 42, 58, 0.9), transparent 70%),
     linear-gradient(165deg, #040a10 0%, #0a1622 45%, #0d1c28 100%);
+}
+
+.panel-tech {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 214, 192, 0.18);
+  background: linear-gradient(165deg, rgba(10, 22, 34, 0.98) 0%, rgba(7, 17, 26, 0.96) 100%);
+  color: #f3f6fa;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 24px 60px -28px rgba(7, 17, 26, 0.7);
+}
+
+.panel-tech::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 214, 192, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 214, 192, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.panel-tech::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 214, 192, 0.7), transparent);
+  pointer-events: none;
+}
+
+.shimmer-edge {
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(0, 214, 192, 0.4) 45%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3.2s linear infinite;
 }
