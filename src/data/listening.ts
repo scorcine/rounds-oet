@@ -1,6 +1,7 @@
 import type { ListeningExtract } from "@/domain/types";
+import { LISTENING_EXTRACTS_EXTRA } from "./listening-extra";
 
-export const LISTENING_EXTRACTS: ListeningExtract[] = [
+const LISTENING_EXTRACTS_BASE: ListeningExtract[] = [
   {
     id: "lis-a-1",
     part: "A",
@@ -122,4 +123,9 @@ Doctor: I'd like to do an ECG and some blood tests today, including troponin. We
       },
     ],
   },
+];
+
+export const LISTENING_EXTRACTS: ListeningExtract[] = [
+  ...LISTENING_EXTRACTS_BASE,
+  ...LISTENING_EXTRACTS_EXTRA,
 ];

@@ -58,7 +58,7 @@ export default function HomePage() {
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {[
             { href: "/diagnose", title: "Diagnostic", blurb: "16-question mini-OET placement." },
-            { href: "/study", title: "SRS reviews", blurb: "Daily Anki-style card goal." },
+            { href: "/lessons", title: "Lessons", blurb: "Microlearning by clinical track." },
             { href: "/exam", title: "Exam mode", blurb: "Timed full set + pacing report." },
           ].map((item, i) => (
             <SkillCard

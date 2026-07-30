@@ -1,6 +1,7 @@
 import type { SpeakingRolePlay } from "@/domain/types";
+import { SPEAKING_ROLEPLAYS_EXTRA } from "./speaking-extra";
 
-export const SPEAKING_ROLEPLAYS: SpeakingRolePlay[] = [
+const SPEAKING_ROLEPLAYS_BASE: SpeakingRolePlay[] = [
   {
     id: "spk-1",
     title: "Explaining new diagnosis: type 2 diabetes",
@@ -93,4 +94,9 @@ TASK
       "Please avoid ibuprofen unless we agree an alternative — it can increase bleeding risk.",
     ],
   },
+];
+
+export const SPEAKING_ROLEPLAYS: SpeakingRolePlay[] = [
+  ...SPEAKING_ROLEPLAYS_BASE,
+  ...SPEAKING_ROLEPLAYS_EXTRA,
 ];

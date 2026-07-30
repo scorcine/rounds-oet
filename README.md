@@ -30,6 +30,12 @@ Open [http://localhost:3000](http://localhost:3000).
 - Set `OPENAI_API_KEY` in `.env.local` for AI; otherwise local heuristic engine runs
 - Optional “human review” credit queue (demo)
 
+## Phase 4 — Content bank
+
+- **`/lessons`** — microlearning by clinical track (GP, Ortho, ED, Surgery, Anesthesia)
+- Expanded Listening / Reading / Writing / Speaking banks
+- SRS deck growth with auto-backfill for existing learners
+
 ## Skills practice
 
 - Listening, Reading, Writing, Speaking modules

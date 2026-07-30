@@ -259,6 +259,48 @@ export const SRS_DECK: SrsCardTemplate[] = [
     back: "Answer remaining questions with educated elimination; don’t leave blanks.",
     tags: ["reading"],
   },
+  {
+    id: "srs-v-rsi",
+    competency: "medical_vocabulary",
+    front: "RSI (anaesthesia)",
+    back: "Rapid sequence induction — used when aspiration risk is high.",
+    tags: ["anesthesia", "ED"],
+  },
+  {
+    id: "srs-v-vte",
+    competency: "medical_vocabulary",
+    front: "VTE",
+    back: "Venous thromboembolism — DVT and/or pulmonary embolism.",
+    tags: ["ortho", "surgery"],
+  },
+  {
+    id: "srs-v-nof",
+    competency: "medical_vocabulary",
+    front: "NOF fracture",
+    back: "Neck of femur fracture — common in older adults after falls.",
+    tags: ["ortho"],
+  },
+  {
+    id: "srs-c-rice",
+    competency: "communicative_functions",
+    front: "RICE advice stands for?",
+    back: "Rest, Ice, Compression, Elevation (plus graded return).",
+    tags: ["ED"],
+  },
+  {
+    id: "srs-g-was-commenced",
+    competency: "functional_grammar",
+    front: "Notes: “started morphine 5 mg IV” → letter",
+    back: "Morphine 5 mg was given intravenously. / She was given morphine 5 mg IV.",
+    tags: ["writing"],
+  },
+  {
+    id: "srs-e-ottawa",
+    competency: "exam_strategies",
+    front: "Ottawa ankle rules purpose?",
+    back: "Decide when ankle X-ray is indicated after injury.",
+    tags: ["ED", "listening"],
+  },
 ];
 
 export function getDeckByCompetency(competency: string) {

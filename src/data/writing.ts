@@ -1,6 +1,7 @@
 import type { WritingCase } from "@/domain/types";
+import { WRITING_CASES_EXTRA } from "./writing-extra";
 
-export const WRITING_CASES: WritingCase[] = [
+const WRITING_CASES_BASE: WritingCase[] = [
   {
     id: "writ-1",
     title: "Referral: suspected colorectal cancer",
@@ -168,4 +169,9 @@ Respiratory Team`,
       },
     ],
   },
+];
+
+export const WRITING_CASES: WritingCase[] = [
+  ...WRITING_CASES_BASE,
+  ...WRITING_CASES_EXTRA,
 ];

@@ -49,10 +49,27 @@ export function loadStudy(): StudyState {
     const raw = localStorage.getItem(STUDY_KEY);
     if (!raw) return DEFAULT_STUDY;
     const parsed = { ...DEFAULT_STUDY, ...JSON.parse(raw) } as StudyState;
-    return ensureDaily(parsed);
+    return ensureDaily(ensureDeckCards(parsed));
   } catch {
     return DEFAULT_STUDY;
   }
+}
+
+/** Backfill newly added SRS templates for existing learners. */
+function ensureDeckCards(state: StudyState): StudyState {
+  let changed = false;
+  const cards = { ...state.cards };
+  const today = todayISO();
+  for (const template of SRS_DECK) {
+    if (!cards[template.id]) {
+      cards[template.id] = createNewCardState(template.id, today);
+      changed = true;
+    }
+  }
+  if (!changed) return state;
+  const next = { ...state, cards };
+  saveStudy(next);
+  return next;
 }
 
 export function saveStudy(state: StudyState): void {
