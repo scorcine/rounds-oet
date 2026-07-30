@@ -18,6 +18,9 @@ export interface BadgeDef {
   description: string;
   icon: string;
   tier: "signal" | "core" | "elite";
+  /** Where to go to earn / progress this badge */
+  href: string;
+  cta: string;
 }
 
 export const BADGE_DEFS: BadgeDef[] = [
@@ -27,6 +30,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Complete the mini-OET diagnostic.",
     icon: "01",
     tier: "signal",
+    href: "/diagnose",
+    cta: "Take diagnostic",
   },
   {
     id: "streak-3",
@@ -34,6 +39,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Practise on 3 consecutive days.",
     icon: "03",
     tier: "signal",
+    href: "/study",
+    cta: "Open SRS study",
   },
   {
     id: "streak-7",
@@ -41,6 +48,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Keep a 7-day study streak.",
     icon: "07",
     tier: "core",
+    href: "/study",
+    cta: "Keep streak going",
   },
   {
     id: "xp-100",
@@ -48,6 +57,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Earn 100 XP from SRS reviews.",
     icon: "XP",
     tier: "signal",
+    href: "/study",
+    cta: "Earn XP now",
   },
   {
     id: "xp-500",
@@ -55,6 +66,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Earn 500 XP total.",
     icon: "★",
     tier: "core",
+    href: "/study",
+    cta: "Farm more XP",
   },
   {
     id: "exam-1",
@@ -62,6 +75,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Finish one full timed exam.",
     icon: "EX",
     tier: "core",
+    href: "/exam",
+    cta: "Start timed exam",
   },
   {
     id: "writing-b",
@@ -69,6 +84,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Hit 80%+ on a writing task (study estimate ≈ Grade B).",
     icon: "W",
     tier: "elite",
+    href: "/practice/writing",
+    cta: "Practice writing",
   },
   {
     id: "speaking-b",
@@ -76,6 +93,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Hit 80%+ on a speaking task (study estimate ≈ Grade B).",
     icon: "S",
     tier: "elite",
+    href: "/practice/speaking",
+    cta: "Practice speaking",
   },
 ];
 

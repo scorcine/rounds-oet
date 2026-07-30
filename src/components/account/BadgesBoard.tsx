@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { BADGE_DEFS, type BadgeDef } from "@/domain/account";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ export function BadgesBoard({
   const unlocked = new Set(unlockedIds);
   const count = BADGE_DEFS.filter((b) => unlocked.has(b.id)).length;
   const pct = Math.round((count / BADGE_DEFS.length) * 100);
+  const nextLocked = BADGE_DEFS.find((b) => !unlocked.has(b.id));
 
   return (
     <section className="panel-tech relative rounded-2xl p-5 sm:p-7">
@@ -45,7 +47,7 @@ export function BadgesBoard({
               Badges
             </h2>
             <p className="mt-2 max-w-md text-sm text-paper/55">
-              Unlock study milestones as you train. Visual rewards only — not official OET grades.
+              Tap a mission to go earn it. Visual rewards only — not official OET grades.
             </p>
           </div>
           <button
@@ -58,7 +60,7 @@ export function BadgesBoard({
         </div>
 
         <div className="mt-6 rounded-xl border border-white/10 bg-black/25 p-4">
-          <div className="flex items-end justify-between gap-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/40">
                 Systems online
@@ -78,6 +80,22 @@ export function BadgesBoard({
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             />
           </div>
+          {nextLocked && (
+            <Link
+              href={nextLocked.href}
+              className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-pulse/40 bg-pulse/15 px-3 py-2.5 transition hover:bg-pulse/25"
+            >
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-pulse">
+                  Next mission
+                </p>
+                <p className="text-sm font-semibold text-paper">{nextLocked.title}</p>
+              </div>
+              <span className="shrink-0 rounded-md bg-pulse px-3 py-1.5 text-xs font-bold text-white">
+                {nextLocked.cta} →
+              </span>
+            </Link>
+          )}
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -90,10 +108,10 @@ export function BadgesBoard({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05, duration: 0.4 }}
                 className={cn(
-                  "group relative overflow-hidden rounded-xl border p-4 transition duration-300",
+                  "group relative flex flex-col overflow-hidden rounded-xl border p-4 transition duration-300",
                   on
                     ? "animate-badge-glow border-ward/40 bg-ward/10"
-                    : "border-white/10 bg-white/[0.03] opacity-70",
+                    : "border-white/10 bg-white/[0.03]",
                 )}
               >
                 {on && (
@@ -133,6 +151,19 @@ export function BadgesBoard({
                     <p className="mt-1 text-xs leading-relaxed text-paper/50">{b.description}</p>
                   </div>
                 </div>
+
+                <Link
+                  href={b.href}
+                  className={cn(
+                    "mt-4 inline-flex items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-bold transition",
+                    on
+                      ? "border border-ward/30 bg-ward/10 text-ward hover:bg-ward/20"
+                      : "bg-pulse text-white hover:brightness-110",
+                  )}
+                >
+                  {on ? `Do again · ${b.cta}` : b.cta}
+                  <span aria-hidden>→</span>
+                </Link>
               </motion.div>
             );
           })}
