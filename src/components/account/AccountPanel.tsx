@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { SyncPayload } from "@/domain/account";
 import {
@@ -30,45 +30,57 @@ export function AccountPanel() {
   const [busy, setBusy] = useState(false);
   const ready = cloudReady();
 
-  const refreshLocal = useCallback(() => {
-    const profileRaw = localStorage.getItem("rounds-oet-profile-v1");
-    if (profileRaw) {
-      try {
-        const p = JSON.parse(profileRaw) as { displayName?: string };
-        if (p.displayName) setDisplayName(p.displayName);
-      } catch {
-        /* ignore */
-      }
-    }
-    const payload = collectLocalPayload(displayName);
+  /** Keep latest name for sync without rebinding auth on every keystroke. */
+  const displayNameRef = useRef(displayName);
+  displayNameRef.current = displayName;
+
+  const refreshBadges = useCallback(() => {
+    const payload = collectLocalPayload(displayNameRef.current);
     const unlocked = evaluateBadges(payload);
     saveBadges(unlocked);
     setBadges(unlocked);
-  }, [displayName]);
+  }, []);
 
   const autoSync = useCallback(
     async (label = "Synced automatically with the cloud.") => {
       setBusy(true);
       setStatus("Syncing…");
-      const result = await runCloudSync(displayName);
+      const result = await runCloudSync(displayNameRef.current);
       setStatus(result.ok ? label : result.message);
-      if (result.ok) refreshLocal();
+      if (result.ok) refreshBadges();
       setBusy(false);
       return result.ok;
     },
-    [displayName, refreshLocal],
+    [refreshBadges],
   );
 
+  // Mount once: load profile + auth. Must NOT depend on displayName.
   useEffect(() => {
-    refreshLocal();
+    try {
+      const profileRaw = localStorage.getItem("rounds-oet-profile-v1");
+      if (profileRaw) {
+        const p = JSON.parse(profileRaw) as { displayName?: string };
+        if (p.displayName) {
+          setDisplayName(p.displayName);
+          displayNameRef.current = p.displayName;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    refreshBadges();
+
     if (!ready) return;
 
     let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+
     void (async () => {
       try {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
         const emailNow = data.session?.user?.email ?? null;
         setUserEmail(emailNow);
         if (emailNow) {
@@ -82,12 +94,16 @@ export function AccountPanel() {
         });
         unsubscribe = () => sub.subscription.unsubscribe();
       } catch {
-        /* not configured at runtime */
+        /* not configured */
       }
     })();
 
-    return () => unsubscribe?.();
-  }, [ready, autoSync, refreshLocal]);
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-once
+  }, [ready]);
 
   const saveProfile = () => {
     localStorage.setItem(
@@ -95,7 +111,7 @@ export function AccountPanel() {
       JSON.stringify({ displayName, updatedAt: new Date().toISOString() }),
     );
     setStatus("Profile saved on this device.");
-    refreshLocal();
+    refreshBadges();
     if (userEmail) void autoSync("Profile saved and synced.");
   };
 
@@ -133,7 +149,9 @@ export function AccountPanel() {
       const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      if (!data.session) throw new Error("No session after sign in — check email confirmation settings.");
+      if (!data.session) {
+        throw new Error("No session after sign in — check email confirmation settings.");
+      }
       setUserEmail(data.session.user.email ?? email);
       await autoSync("Signed in — progress synced automatically.");
     } catch (e) {
@@ -155,7 +173,7 @@ export function AccountPanel() {
   const onImport = async (file: File) => {
     const text = await file.text();
     const payload = JSON.parse(text) as SyncPayload;
-    const local = collectLocalPayload(displayName);
+    const local = collectLocalPayload(displayNameRef.current);
     const merged = mergePayloads(local, payload);
     merged.badgesUnlocked = evaluateBadges(merged);
     applyLocalPayload(merged);
@@ -181,7 +199,10 @@ export function AccountPanel() {
           <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="mt-2 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm"
+            autoComplete="nickname"
+            spellCheck={false}
+            className="mt-2 w-full rounded-lg border border-ink/15 bg-white px-3 py-2 text-sm outline-none ring-ward focus:ring-2"
+            placeholder="Your name"
           />
           <button
             type="button"
@@ -306,7 +327,7 @@ export function AccountPanel() {
 
         <BadgesBoard
           unlockedIds={[...new Set([...badges, ...loadBadges()])]}
-          onRefresh={refreshLocal}
+          onRefresh={refreshBadges}
         />
       </div>
     </div>
