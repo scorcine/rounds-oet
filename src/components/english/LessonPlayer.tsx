@@ -647,10 +647,10 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
               ) : null}
               {!nextLesson && markedComplete ? (
                 <Link
-                  href="/english/A2"
+                  href="/english"
                   className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper"
                 >
-                  A1 done — open A2 →
+                  A1 done — see all modules →
                 </Link>
               ) : null}
               <Link

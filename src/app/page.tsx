@@ -58,10 +58,10 @@ export default function HomePage() {
               General English · CEFR
             </p>
             <h2 className="mt-3 font-display text-4xl font-bold md:text-5xl">
-              English Path A1–A2
+              English Path A1–C2
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-paper/55 sm:text-base">
-              A1 Premium: listen, speak, write + 4 checkpoints — then OET Medicine.
+              A1 Premium is live. A2–C2 modules are listed under construction until unlocked.
             </p>
           </div>
           <Link

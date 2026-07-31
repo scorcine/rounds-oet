@@ -1,4 +1,6 @@
-export type CefrLevel = "A1" | "A2";
+export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+
+export type EnglishLevelStatus = "ready" | "construction";
 
 export type EnglishQuizMcq = {
   id: string;
@@ -78,7 +80,10 @@ export type EnglishLevelMeta = {
   title: string;
   blurb: string;
   colorHint: string;
+  status: EnglishLevelStatus;
 };
 
 /** Pass mark for marking a lesson complete */
 export const ENGLISH_PASS_PERCENT = 70;
+
+export const CEFR_LEVEL_ORDER: CefrLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];

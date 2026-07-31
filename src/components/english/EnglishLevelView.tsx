@@ -126,10 +126,10 @@ export function EnglishLevelView({ level }: { level: CefrLevel }) {
               You finished all lessons and checkpoints. Keep vocab warm in Study, then start A2.
             </p>
             <Link
-              href="/english/A2"
+              href="/english"
               className="mt-4 inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper"
             >
-              Go to A2 →
+              See all modules →
             </Link>
           </Panel>
         ) : null}
