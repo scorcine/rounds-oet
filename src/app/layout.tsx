@@ -28,6 +28,11 @@ export const metadata: Metadata = {
   },
   description:
     "Adaptive OET Medicine training for doctors — diagnostic, spaced repetition, exam mode and AI feedback.",
+  applicationName: "Rounds",
+  icons: {
+    icon: [{ url: "/icon", type: "image/png" }],
+    apple: [{ url: "/apple-icon", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
