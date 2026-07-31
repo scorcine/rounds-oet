@@ -6,7 +6,11 @@ import type { EnglishLesson, EnglishQuizItem } from "@/domain/english";
 import { ENGLISH_PASS_PERCENT } from "@/domain/english";
 import { getLessonsByLevel } from "@/data/english";
 import { recordEnglishLesson } from "@/lib/english-progress";
-import { cancelSpeech, speakDialogueDual } from "@/lib/listening-tts";
+import {
+  playEnglishSpeech,
+  playEnglishSpeechSequence,
+  stopAllEnglishSpeech,
+} from "@/lib/english-tts";
 import {
   getSpeechRecognition,
   listenOnce,
@@ -43,27 +47,6 @@ function scoreQuiz(
   return { correct, detail, scorePercent };
 }
 
-function speakPhrases(phrases: { en: string }[]) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  cancelSpeech();
-  const voices = window.speechSynthesis.getVoices();
-  const en =
-    voices.find((v) => /en-GB/i.test(v.lang)) ??
-    voices.find((v) => /en(-|_|$)/i.test(v.lang)) ??
-    null;
-  let i = 0;
-  const next = () => {
-    if (i >= phrases.length) return;
-    const u = new SpeechSynthesisUtterance(phrases[i++]!.en);
-    u.rate = 0.9;
-    if (en) u.voice = en;
-    u.onend = () => window.setTimeout(next, 280);
-    u.onerror = () => window.setTimeout(next, 280);
-    window.speechSynthesis.speak(u);
-  };
-  window.setTimeout(next, 80);
-}
-
 export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [listenAnswers, setListenAnswers] = useState<Record<string, string>>({});
@@ -85,7 +68,7 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
   const chunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    cancelSpeech();
+    stopAllEnglishSpeech();
     setAnswers({});
     setListenAnswers({});
     setSubmitted(false);
@@ -109,7 +92,7 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
 
   useEffect(
     () => () => {
-      cancelSpeech();
+      stopAllEnglishSpeech();
       if (recUrl) URL.revokeObjectURL(recUrl);
     },
     [recUrl],
@@ -206,11 +189,16 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
   const playListening = () => {
     if (!lesson.listening) return;
     if (listenPlaying) {
-      cancelSpeech();
+      stopAllEnglishSpeech();
       setListenPlaying(false);
       return;
     }
-    speakDialogueDual(lesson.listening.script, lesson.listening.script.replace(/\n/g, " "), {
+    // Play each dialogue turn with studio English TTS (natural pronunciation)
+    const turns = lesson.listening.script
+      .split(/\n/)
+      .map((l) => l.replace(/^[A-Za-z][A-Za-z ]{0,20}:\s*/, "").trim())
+      .filter(Boolean);
+    void playEnglishSpeechSequence(turns, {
       onStart: () => setListenPlaying(true),
       onEnd: () => setListenPlaying(false),
     });
@@ -218,24 +206,22 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
 
   const togglePhrases = () => {
     if (speakingPhrases) {
-      cancelSpeech();
+      stopAllEnglishSpeech();
       setSpeakingPhrases(false);
       return;
     }
     setSpeakingPhrases(true);
-    speakPhrases(lesson.phrases);
-    window.setTimeout(
-      () => setSpeakingPhrases(false),
-      Math.max(4000, lesson.phrases.length * 2500),
+    void playEnglishSpeechSequence(
+      lesson.phrases.map((p) => p.en),
+      {
+        onStart: () => setSpeakingPhrases(true),
+        onEnd: () => setSpeakingPhrases(false),
+      },
     );
   };
 
   const hearModelLine = (line: string) => {
-    cancelSpeech();
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    const u = new SpeechSynthesisUtterance(line.replace(/___+/g, "…"));
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
+    void playEnglishSpeech(line);
   };
 
   const practiseLine = async (line: string) => {
@@ -243,7 +229,7 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
       alert("Pronunciation check needs Chrome/Edge with microphone access.");
       return;
     }
-    cancelSpeech();
+    stopAllEnglishSpeech();
     setListeningLine(line);
     try {
       const heard = await listenOnce("en-GB");
@@ -414,7 +400,7 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
             </p>
           ) : (
             <p className="mt-2 text-xs text-ink/45">
-              Tap Practise, say the line clearly, and get an automatic score (word match via speech recognition).
+              Tap Practise, say the line clearly, and get an automatic score. Hear uses natural English studio voice.
             </p>
           )}
           <div className="mt-4 space-y-3">
