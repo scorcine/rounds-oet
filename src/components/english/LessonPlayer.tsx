@@ -18,6 +18,7 @@ import {
   type PronunciationResult,
 } from "@/lib/pronunciation";
 import { Panel } from "@/components/ui";
+import type { EnglishWritingFeedback } from "@/domain/feedback";
 import { cn, countWords } from "@/lib/utils";
 
 function answersMatch(user: string, answer: string, accepted?: string[]): boolean {
@@ -57,6 +58,8 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
   const [listenPlaying, setListenPlaying] = useState(false);
   const [writingText, setWritingText] = useState("");
   const [writingChecked, setWritingChecked] = useState(false);
+  const [writingLoading, setWritingLoading] = useState(false);
+  const [writingFeedback, setWritingFeedback] = useState<EnglishWritingFeedback | null>(null);
   const [speakDone, setSpeakDone] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recUrl, setRecUrl] = useState<string | null>(null);
@@ -78,6 +81,8 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
     setListenPlaying(false);
     setWritingText("");
     setWritingChecked(false);
+    setWritingLoading(false);
+    setWritingFeedback(null);
     setSpeakDone(false);
     setRecording(false);
     setListeningLine(null);
@@ -129,13 +134,46 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
   }, [pronunciation]);
 
   const writingWords = countWords(writingText);
-  const writingOk =
+  const writingBasicsOk =
     !lesson.writing ||
     (writingWords >= lesson.writing.minWords &&
       (!(lesson.writing.keywords?.length) ||
         lesson.writing.keywords.some((k) =>
           writingText.toLowerCase().includes(k.toLowerCase()),
         )));
+  const writingOk =
+    !lesson.writing ||
+    (writingFeedback ? writingFeedback.ok && writingBasicsOk : writingBasicsOk);
+
+  async function checkWriting() {
+    if (!lesson.writing) return;
+    setWritingLoading(true);
+    setWritingChecked(true);
+    setWritingFeedback(null);
+    try {
+      const res = await fetch("/api/feedback/english-writing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: writingText,
+          prompt: lesson.writing.prompt,
+          minWords: lesson.writing.minWords,
+          keywords: lesson.writing.keywords,
+          sample: lesson.writing.sample,
+          level: lesson.level,
+          lessonTitle: lesson.title,
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as EnglishWritingFeedback;
+        setWritingFeedback(data);
+      }
+    } catch {
+      /* keep basics-only UI */
+    } finally {
+      setWritingLoading(false);
+    }
+  }
 
   const premiumReady =
     (!lesson.listening || listenSubmitted) &&
@@ -524,6 +562,7 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
             onChange={(e) => {
               setWritingText(e.target.value);
               setWritingChecked(false);
+              setWritingFeedback(null);
             }}
             rows={4}
             className="mt-3 w-full rounded-lg border border-ink/15 bg-white px-3 py-2 text-sm outline-none ring-ward focus:ring-2"
@@ -531,21 +570,99 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
           />
           <button
             type="button"
-            onClick={() => setWritingChecked(true)}
-            className="mt-3 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper"
+            onClick={() => void checkWriting()}
+            disabled={writingLoading || writingWords < 3}
+            className="mt-3 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-40"
           >
-            Check writing
+            {writingLoading ? "Checking…" : "Check writing"}
           </button>
           {writingChecked ? (
-            <div className="mt-3 space-y-2 text-sm">
-              <p className={writingOk ? "font-semibold text-ward" : "font-semibold text-pulse"}>
-                {writingOk
-                  ? "Good — length and keywords look fine."
-                  : `Need at least ${lesson.writing.minWords} words` +
-                    (lesson.writing.keywords?.length
-                      ? ` and one of: ${lesson.writing.keywords.join(", ")}`
-                      : "")}
-              </p>
+            <div className="mt-3 space-y-3 text-sm">
+              {writingLoading ? (
+                <p className="text-ink/55">Reading your text and preparing feedback…</p>
+              ) : writingFeedback ? (
+                <>
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <p
+                      className={
+                        writingFeedback.ok
+                          ? "font-semibold text-ward"
+                          : "font-semibold text-pulse"
+                      }
+                    >
+                      {writingFeedback.summary}
+                    </p>
+                    <span className="text-xs text-ink/45">
+                      Score ~{writingFeedback.scorePercent}% · {writingFeedback.source}
+                    </span>
+                  </div>
+                  {!writingBasicsOk ? (
+                    <p className="text-pulse">
+                      Need at least {lesson.writing.minWords} words
+                      {lesson.writing.keywords?.length
+                        ? ` and one of: ${lesson.writing.keywords.join(", ")}`
+                        : ""}
+                      .
+                    </p>
+                  ) : null}
+                  {writingFeedback.corrections.length ? (
+                    <div className="rounded-lg border border-ink/10 bg-white px-3 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">
+                        Corrections
+                      </p>
+                      <ul className="mt-2 space-y-2">
+                        {writingFeedback.corrections.map((c, i) => (
+                          <li key={`${c.original}-${i}`} className="leading-relaxed text-ink/80">
+                            <span className="line-through text-pulse/80">{c.original}</span>
+                            {" → "}
+                            <span className="font-semibold text-ward">{c.corrected}</span>
+                            <span className="mt-0.5 block text-xs text-ink/55">{c.explanation}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {writingFeedback.strengths.length ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">
+                        What worked
+                      </p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-ink/75">
+                        {writingFeedback.strengths.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {writingFeedback.improvements.length ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">
+                        Could be better
+                      </p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-ink/75">
+                        {writingFeedback.improvements.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {writingFeedback.correctedVersion ? (
+                    <p className="rounded-lg bg-ward/10 px-3 py-2 text-ink/80">
+                      <span className="font-semibold text-ink">Improved version: </span>
+                      {writingFeedback.correctedVersion}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <p className={writingOk ? "font-semibold text-ward" : "font-semibold text-pulse"}>
+                  {writingOk
+                    ? "Good — length and keywords look fine."
+                    : `Need at least ${lesson.writing.minWords} words` +
+                      (lesson.writing.keywords?.length
+                        ? ` and one of: ${lesson.writing.keywords.join(", ")}`
+                        : "")}
+                </p>
+              )}
               <p className="rounded-lg bg-scrub/60 px-3 py-2 text-ink/70">
                 <span className="font-semibold text-ink">Sample: </span>
                 {lesson.writing.sample}

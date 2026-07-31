@@ -61,3 +61,21 @@ export const SPEAKING_CRITERION_LABELS: Record<SpeakingCriterionId, string> = {
   appropriateness: "Appropriateness",
   resources: "Resources of grammar & expression",
 };
+
+/** CEFR English Path writing check (A1–C2 lessons) */
+export interface EnglishWritingCorrection {
+  original: string;
+  corrected: string;
+  explanation: string;
+}
+
+export interface EnglishWritingFeedback {
+  source: FeedbackSource;
+  ok: boolean;
+  scorePercent: number;
+  summary: string;
+  corrections: EnglishWritingCorrection[];
+  strengths: string[];
+  improvements: string[];
+  correctedVersion: string;
+}
