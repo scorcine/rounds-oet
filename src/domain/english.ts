@@ -68,6 +68,8 @@ export type EnglishLesson = {
   listening?: EnglishListening;
   speaking?: EnglishSpeaking;
   writing?: EnglishWriting;
+  /** Extra drilling beyond the main quiz */
+  drills?: EnglishQuizItem[];
 };
 
 export type EnglishLevelMeta = {

@@ -1,20 +1,26 @@
 import type { CefrLevel, EnglishLesson, EnglishLevelMeta } from "@/domain/english";
 import { ENGLISH_A1_LESSONS } from "./english-a1";
 import { A1_PREMIUM_BY_ID } from "./english-a1-premium";
+import { A1_DRILLS_BY_ID } from "./english-a1-drills";
 import { ENGLISH_A1_REVIEWS } from "./english-a1-reviews";
 import { ENGLISH_A2_LESSONS } from "./english-a2";
 
 function withPremium(lesson: EnglishLesson): EnglishLesson {
-  if (lesson.level !== "A1" || lesson.kind === "review") return lesson;
+  if (lesson.level !== "A1") return lesson;
+  if (lesson.kind === "review") {
+    const drills = A1_DRILLS_BY_ID[lesson.id];
+    return drills?.length ? { ...lesson, drills, minutes: Math.max(lesson.minutes, 15) } : lesson;
+  }
   const extras = A1_PREMIUM_BY_ID[lesson.id];
-  if (!extras) return { ...lesson, kind: "lesson" };
+  const drills = A1_DRILLS_BY_ID[lesson.id];
   return {
     ...lesson,
     kind: "lesson",
-    minutes: Math.max(lesson.minutes, 12),
-    listening: extras.listening,
-    speaking: extras.speaking,
-    writing: extras.writing,
+    minutes: Math.max(lesson.minutes, drills?.length ? 18 : 12),
+    listening: extras?.listening ?? lesson.listening,
+    speaking: extras?.speaking ?? lesson.speaking,
+    writing: extras?.writing ?? lesson.writing,
+    drills: drills ?? lesson.drills,
   };
 }
 
@@ -24,7 +30,7 @@ export const ENGLISH_LEVELS: EnglishLevelMeta[] = [
     label: "A1 · Beginner Premium",
     title: "First steps in English",
     blurb:
-      "20 lessons + 4 checkpoints: teach, listen, speak, write, phrase audio, 70% quiz and A1 vocab in Study.",
+      "20 lessons + 4 checkpoints: listen, speak with pronunciation score, write, extra drills, 70% quiz and A1 vocab in Study.",
     colorHint: "ward",
   },
   {

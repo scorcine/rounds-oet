@@ -86,8 +86,8 @@ export function EnglishHub() {
           </p>
           <ul className="mt-3 space-y-2 text-sm text-ink/70">
             <li>1. Read teach blocks and the EN/PT phrase bank (Hear phrases).</li>
-            <li>2. Do Listening dialogue, Speaking (record), and mini Writing.</li>
-            <li>3. Score 70%+ on the quiz — checkpoints every 5 lessons.</li>
+            <li>2. Listening + Speaking with pronunciation score + mini Writing.</li>
+            <li>3. Score 70%+ on the quiz — then optional Extra drilling for more hours.</li>
             <li>4. Drill A1 vocab in Study (50 cards). Then open A2 or OET.</li>
           </ul>
         </Panel>
