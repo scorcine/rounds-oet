@@ -73,7 +73,6 @@ export function isLessonComplete(lessonId: string, progress: EnglishProgress): b
 }
 
 export function suggestedLevel(progress: EnglishProgress): CefrLevel {
-  // If fewer than 7 A1 lessons done, stay on A1
   const a1Done = Object.keys(progress.completed).filter((id) => id.startsWith("en-a1-")).length;
-  return a1Done >= 7 ? "A2" : "A1";
+  return a1Done >= 16 ? "A2" : "A1";
 }

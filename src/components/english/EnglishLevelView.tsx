@@ -108,8 +108,10 @@ export function EnglishLevelView({ level }: { level: CefrLevel }) {
 
         {stats.percent === 100 && level === "A1" ? (
           <Panel className="mt-8 bg-scrub/60">
-            <p className="font-display text-2xl text-ink">A1 complete</p>
-            <p className="mt-1 text-sm text-ink/60">Ready for elementary English?</p>
+            <p className="font-display text-2xl text-ink">A1 complete — well done</p>
+            <p className="mt-1 text-sm text-ink/60">
+              You finished all 20 beginner lessons. A2 builds past tense, plans and everyday conversation.
+            </p>
             <Link
               href="/english/A2"
               className="mt-4 inline-flex rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper"

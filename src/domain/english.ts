@@ -41,6 +41,8 @@ export type EnglishLesson = {
   teach: EnglishTeachBlock[];
   phrases: EnglishPhrase[];
   quiz: EnglishQuizItem[];
+  /** Optional tip shown under the phrase bank */
+  practiceTip?: string;
 };
 
 export type EnglishLevelMeta = {

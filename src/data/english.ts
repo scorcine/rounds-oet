@@ -7,14 +7,15 @@ export const ENGLISH_LEVELS: EnglishLevelMeta[] = [
     id: "A1",
     label: "A1 · Beginner",
     title: "First steps in English",
-    blurb: "Greetings, to be, numbers, daily life and simple clinic phrases.",
+    blurb:
+      "20 complete lessons: grammar, vocab, phrases with PT glosses, audio practice and a 70% pass quiz.",
     colorHint: "ward",
   },
   {
     id: "A2",
     label: "A2 · Elementary",
     title: "Build real conversations",
-    blurb: "Past, future plans, comparisons, health talk and short messages.",
+    blurb: "Past, future plans, comparisons, health talk and short messages. Expand after A1.",
     colorHint: "pulse",
   },
 ];
