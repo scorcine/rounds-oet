@@ -1,4 +1,5 @@
 import type { SrsCardTemplate } from "@/domain/study";
+import { ENGLISH_A1_VOCAB } from "./english-a1-vocab";
 
 /** Starter deck — schema supports scaling toward 2000+ terms. */
 export const SRS_DECK: SrsCardTemplate[] = [
@@ -301,6 +302,7 @@ export const SRS_DECK: SrsCardTemplate[] = [
     back: "Decide when ankle X-ray is indicated after injury.",
     tags: ["ED", "listening"],
   },
+  ...ENGLISH_A1_VOCAB,
 ];
 
 export function getDeckByCompetency(competency: string) {

@@ -30,7 +30,7 @@ export function EnglishHub() {
       <PageHero
         eyebrow="General English · CEFR"
         title="English Path A1–A2"
-        description="Build everyday English before (or alongside) OET Medicine. A1 is a full 20-lesson track with Portuguese glosses, phrase audio and a 70% pass quiz. Finish A1, then move to A2."
+        description="A1 Premium: 20 lessons + 4 checkpoints with listen, speak, write, phrase audio, 70% pass quizzes, and 50 vocab cards in Study. Finish A1, then move to A2."
         action={
           <Link
             href={continueHref}
@@ -85,10 +85,10 @@ export function EnglishHub() {
             How it works
           </p>
           <ul className="mt-3 space-y-2 text-sm text-ink/70">
-            <li>1. Read the teach blocks and phrase bank (EN + PT).</li>
-            <li>2. Tap “Hear phrases” to practise pronunciation.</li>
-            <li>3. Score 70%+ on the quiz to mark the lesson complete.</li>
-            <li>4. Finish all 20 A1 lessons, then open A2 — or jump to OET when ready.</li>
+            <li>1. Read teach blocks and the EN/PT phrase bank (Hear phrases).</li>
+            <li>2. Do Listening dialogue, Speaking (record), and mini Writing.</li>
+            <li>3. Score 70%+ on the quiz — checkpoints every 5 lessons.</li>
+            <li>4. Drill A1 vocab in Study (50 cards). Then open A2 or OET.</li>
           </ul>
         </Panel>
       </div>

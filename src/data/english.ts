@@ -1,14 +1,30 @@
 import type { CefrLevel, EnglishLesson, EnglishLevelMeta } from "@/domain/english";
 import { ENGLISH_A1_LESSONS } from "./english-a1";
+import { A1_PREMIUM_BY_ID } from "./english-a1-premium";
+import { ENGLISH_A1_REVIEWS } from "./english-a1-reviews";
 import { ENGLISH_A2_LESSONS } from "./english-a2";
+
+function withPremium(lesson: EnglishLesson): EnglishLesson {
+  if (lesson.level !== "A1" || lesson.kind === "review") return lesson;
+  const extras = A1_PREMIUM_BY_ID[lesson.id];
+  if (!extras) return { ...lesson, kind: "lesson" };
+  return {
+    ...lesson,
+    kind: "lesson",
+    minutes: Math.max(lesson.minutes, 12),
+    listening: extras.listening,
+    speaking: extras.speaking,
+    writing: extras.writing,
+  };
+}
 
 export const ENGLISH_LEVELS: EnglishLevelMeta[] = [
   {
     id: "A1",
-    label: "A1 · Beginner",
+    label: "A1 · Beginner Premium",
     title: "First steps in English",
     blurb:
-      "20 complete lessons: grammar, vocab, phrases with PT glosses, audio practice and a 70% pass quiz.",
+      "20 lessons + 4 checkpoints: teach, listen, speak, write, phrase audio, 70% quiz and A1 vocab in Study.",
     colorHint: "ward",
   },
   {
@@ -21,8 +37,9 @@ export const ENGLISH_LEVELS: EnglishLevelMeta[] = [
 ];
 
 export const ENGLISH_LESSONS: EnglishLesson[] = [
-  ...ENGLISH_A1_LESSONS,
-  ...ENGLISH_A2_LESSONS,
+  ...ENGLISH_A1_LESSONS.map(withPremium),
+  ...ENGLISH_A1_REVIEWS,
+  ...ENGLISH_A2_LESSONS.map((l) => ({ ...l, kind: "lesson" as const })),
 ].sort((a, b) => a.level.localeCompare(b.level) || a.order - b.order);
 
 export function getLessonsByLevel(level: CefrLevel): EnglishLesson[] {

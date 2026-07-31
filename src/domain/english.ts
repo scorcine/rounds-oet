@@ -30,6 +30,28 @@ export type EnglishPhrase = {
   pt: string;
 };
 
+export type EnglishListening = {
+  title: string;
+  /** Doctor:/Patient: or Speaker: lines for dual-voice TTS */
+  script: string;
+  prompt: string;
+  questions: EnglishQuizItem[];
+};
+
+export type EnglishSpeaking = {
+  tip: string;
+  /** Model lines the learner should practise saying */
+  lines: string[];
+};
+
+export type EnglishWriting = {
+  prompt: string;
+  minWords: number;
+  /** Soft check — any of these words should appear */
+  keywords?: string[];
+  sample: string;
+};
+
 export type EnglishLesson = {
   id: string;
   level: CefrLevel;
@@ -41,8 +63,11 @@ export type EnglishLesson = {
   teach: EnglishTeachBlock[];
   phrases: EnglishPhrase[];
   quiz: EnglishQuizItem[];
-  /** Optional tip shown under the phrase bank */
   practiceTip?: string;
+  kind?: "lesson" | "review";
+  listening?: EnglishListening;
+  speaking?: EnglishSpeaking;
+  writing?: EnglishWriting;
 };
 
 export type EnglishLevelMeta = {
@@ -52,3 +77,6 @@ export type EnglishLevelMeta = {
   blurb: string;
   colorHint: string;
 };
+
+/** Pass mark for marking a lesson complete */
+export const ENGLISH_PASS_PERCENT = 70;

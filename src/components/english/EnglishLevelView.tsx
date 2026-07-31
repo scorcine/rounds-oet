@@ -84,11 +84,24 @@ export function EnglishLevelView({ level }: { level: CefrLevel }) {
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-ward">
-                    <span>Lesson {lesson.order}</span>
+                    <span>
+                      {lesson.kind === "review"
+                        ? "Checkpoint"
+                        : `Lesson ${Math.floor(lesson.order)}`}
+                    </span>
                     <span className="text-ink/25">·</span>
                     <span>{lesson.minutes} min</span>
                     <span className="text-ink/25">·</span>
                     <span className="normal-case tracking-normal text-ink/45">{lesson.topic}</span>
+                    {lesson.kind === "review" ? (
+                      <span className="rounded-md bg-pulse/15 px-1.5 py-0.5 normal-case tracking-normal text-pulse">
+                        Review
+                      </span>
+                    ) : lesson.listening ? (
+                      <span className="rounded-md bg-ward/15 px-1.5 py-0.5 normal-case tracking-normal text-ward">
+                        L+S+W
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-1 font-display text-xl font-bold text-ink">{lesson.title}</p>
                 </div>
@@ -108,9 +121,9 @@ export function EnglishLevelView({ level }: { level: CefrLevel }) {
 
         {stats.percent === 100 && level === "A1" ? (
           <Panel className="mt-8 bg-scrub/60">
-            <p className="font-display text-2xl text-ink">A1 complete — well done</p>
+            <p className="font-display text-2xl text-ink">A1 Premium complete — well done</p>
             <p className="mt-1 text-sm text-ink/60">
-              You finished all 20 beginner lessons. A2 builds past tense, plans and everyday conversation.
+              You finished all lessons and checkpoints. Keep vocab warm in Study, then start A2.
             </p>
             <Link
               href="/english/A2"

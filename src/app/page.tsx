@@ -61,7 +61,7 @@ export default function HomePage() {
               English Path A1–A2
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-paper/55 sm:text-base">
-              20 short A1 lessons with Portuguese glosses — foundations first, then OET Medicine.
+              A1 Premium: listen, speak, write + 4 checkpoints — then OET Medicine.
             </p>
           </div>
           <Link

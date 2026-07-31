@@ -88,7 +88,7 @@ export function parseDialogueTurns(transcript: string): DialogueTurn[] {
   const turns: DialogueTurn[] = [];
   for (const line of lines) {
     const m = line.match(
-      /^(Doctor|Patient|Nurse|Anaesthetist|Registrar|Speaker|Nurse lead|Interviewer):\s*(.+)$/i,
+      /^(Doctor|Patient|Nurse|Anaesthetist|Registrar|Speaker|Nurse lead|Interviewer|[AB]):\s*(.+)$/i,
     );
     if (m) {
       turns.push({ role: m[1], text: m[2].trim() });
@@ -124,7 +124,7 @@ function pickVoices(): { clinician: SpeechSynthesisVoice | null; patient: Speech
 }
 
 function isPatientRole(role: string): boolean {
-  return /patient/i.test(role);
+  return /patient|^b$/i.test(role);
 }
 
 function sliceFromRatio(text: string, ratio: number): string {
