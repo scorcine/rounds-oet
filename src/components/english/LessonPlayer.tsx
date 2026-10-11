@@ -21,7 +21,7 @@ import { Panel } from "@/components/ui";
 import type { EnglishWritingFeedback } from "@/domain/feedback";
 import { cn, countWords } from "@/lib/utils";
 import { diffWords } from "@/lib/text-diff";
-import { answersMatch } from "@/lib/english-answers";
+import { answersMatch, fixApostrophes } from "@/lib/english-answers";
 
 function withBold(text: string) {
   return text
@@ -188,7 +188,7 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: writingText,
+          text: fixApostrophes(writingText),
           prompt: lesson.writing.prompt,
           minWords: lesson.writing.minWords,
           keywords: lesson.writing.keywords,
@@ -593,7 +593,11 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
           <textarea
             value={writingText}
             onChange={(e) => {
-              setWritingText(e.target.value);
+              setWritingText(
+                (e.nativeEvent as InputEvent).isComposing
+                  ? e.target.value
+                  : fixApostrophes(e.target.value),
+              );
               setWritingChecked(false);
               setWritingFeedback(null);
             }}
@@ -999,7 +1003,13 @@ function QuizCard({
           type="text"
           disabled={disabled}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) =>
+            onChange(
+              (e.nativeEvent as InputEvent).isComposing
+                ? e.target.value
+                : fixApostrophes(e.target.value),
+            )
+          }
           className="mt-3 w-full rounded-lg border border-ink/15 bg-white px-3 py-2 text-sm outline-none ring-ward focus:ring-2"
           placeholder="Type your answer"
         />

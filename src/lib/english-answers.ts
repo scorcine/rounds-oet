@@ -1,6 +1,11 @@
 /** Apostrophe look-alikes, including the acute accent from Brazilian ABNT2 keyboards. */
 const APOSTROPHES = /[\u2018\u2019\u201B\u2032\u00B4\u0060\u02B9\u02BB\u02BC\u02BD\u02C8\u02CA\u0301]/g;
 
+/** Swap apostrophe look-alikes in learner text for a plain ' (keeps accented letters intact). */
+export function fixApostrophes(s: string): string {
+  return s.replace(/[\u2018\u2019\u201B\u2032\u00B4\u0060\u02B9\u02BB\u02BC\u02BD\u02C8\u02CA]/g, "'");
+}
+
 export function normalizeEnglishAnswer(s: string): string {
   return s
     .normalize("NFKC")

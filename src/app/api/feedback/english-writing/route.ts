@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { heuristicEnglishWritingFeedback } from "@/lib/english-writing-feedback";
 import type { EnglishWritingFeedback } from "@/domain/feedback";
 import { hasTextChange } from "@/lib/text-diff";
+import { fixApostrophes } from "@/lib/english-answers";
 
 export const runtime = "nodejs";
 
@@ -103,7 +104,12 @@ ${input.text}`;
           corrected: String(c.corrected ?? "").trim(),
           explanation: String(c.explanation ?? "").trim(),
         }))
-        .filter((c) => c.original && c.corrected && hasTextChange(c.original, c.corrected))
+        .filter(
+          (c) =>
+            c.original &&
+            c.corrected &&
+            hasTextChange(fixApostrophes(c.original), fixApostrophes(c.corrected)),
+        )
         .slice(0, 6),
       strengths: (parsed.strengths ?? []).slice(0, 4).map(String),
       improvements: (parsed.improvements ?? []).slice(0, 5).map(String),
@@ -135,7 +141,7 @@ export async function POST(req: Request) {
   }
 
   const input = {
-    text: body.text,
+    text: fixApostrophes(body.text),
     prompt: body.prompt,
     minWords: typeof body.minWords === "number" ? body.minWords : 15,
     keywords: body.keywords,
