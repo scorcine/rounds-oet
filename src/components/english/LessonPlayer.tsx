@@ -20,6 +20,7 @@ import {
 import { Panel } from "@/components/ui";
 import type { EnglishWritingFeedback } from "@/domain/feedback";
 import { cn, countWords } from "@/lib/utils";
+import { diffWords } from "@/lib/text-diff";
 
 function answersMatch(user: string, answer: string, accepted?: string[]): boolean {
   const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
@@ -613,9 +614,25 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
                       <ul className="mt-2 space-y-2">
                         {writingFeedback.corrections.map((c, i) => (
                           <li key={`${c.original}-${i}`} className="leading-relaxed text-ink/80">
-                            <span className="line-through text-pulse/80">{c.original}</span>
-                            {" → "}
-                            <span className="font-semibold text-ward">{c.corrected}</span>
+                            {diffWords(c.original, c.corrected).map((seg, k) =>
+                              seg.type === "same" ? (
+                                <span key={k}>{seg.text}</span>
+                              ) : seg.type === "del" ? (
+                                <span
+                                  key={k}
+                                  className="rounded bg-pulse/10 px-0.5 text-pulse/90 line-through"
+                                >
+                                  {seg.text}
+                                </span>
+                              ) : (
+                                <span
+                                  key={k}
+                                  className="rounded bg-ward/10 px-0.5 font-semibold text-ward"
+                                >
+                                  {seg.text}
+                                </span>
+                              ),
+                            )}
                             <span className="mt-0.5 block text-xs text-ink/55">{c.explanation}</span>
                           </li>
                         ))}

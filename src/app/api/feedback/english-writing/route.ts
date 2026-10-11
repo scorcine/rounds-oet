@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { heuristicEnglishWritingFeedback } from "@/lib/english-writing-feedback";
 import type { EnglishWritingFeedback } from "@/domain/feedback";
+import { hasTextChange } from "@/lib/text-diff";
 
 export const runtime = "nodejs";
 
@@ -32,7 +33,9 @@ Return ONLY valid JSON:
 Rules:
 - ok = true if the learner roughly completed the task and met ~${input.minWords} words (small grammar errors still ok=true).
 - scorePercent 0–100 for this level (be fair, not harsh for A1).
-- corrections: up to 6 concrete fixes from THEIR text (quote original snippet → corrected).
+- corrections: up to 6 concrete fixes from THEIR text (quote original snippet exactly as written → corrected).
+- Each correction must actually change something; never list one where corrected equals original. If the text has no mistakes, return an empty list.
+- Keep each snippet short (the few words around the mistake), and do not repeat the same fix in two corrections.
 - explanations in simple English (one short sentence each).
 - correctedVersion: full rewrite of THEIR text, keeping their meaning/facts (name, city, family), fixing grammar/spelling/capitalisation.
 - strengths / improvements: short bullet-style strings (max 4 each).
@@ -94,11 +97,14 @@ ${input.text}`;
         Math.max(0, Math.min(100, parsed.scorePercent ?? (lengthOk ? 70 : 40))),
       ),
       summary: parsed.summary?.trim() || "Here is feedback on your writing.",
-      corrections: (parsed.corrections ?? []).slice(0, 6).map((c) => ({
-        original: String(c.original ?? ""),
-        corrected: String(c.corrected ?? ""),
-        explanation: String(c.explanation ?? ""),
-      })),
+      corrections: (parsed.corrections ?? [])
+        .map((c) => ({
+          original: String(c.original ?? "").trim(),
+          corrected: String(c.corrected ?? "").trim(),
+          explanation: String(c.explanation ?? "").trim(),
+        }))
+        .filter((c) => c.original && c.corrected && hasTextChange(c.original, c.corrected))
+        .slice(0, 6),
       strengths: (parsed.strengths ?? []).slice(0, 4).map(String),
       improvements: (parsed.improvements ?? []).slice(0, 5).map(String),
       correctedVersion:
