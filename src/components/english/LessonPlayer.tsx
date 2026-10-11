@@ -21,20 +21,20 @@ import { Panel } from "@/components/ui";
 import type { EnglishWritingFeedback } from "@/domain/feedback";
 import { cn, countWords } from "@/lib/utils";
 import { diffWords } from "@/lib/text-diff";
+import { answersMatch } from "@/lib/english-answers";
 
-function answersMatch(user: string, answer: string, accepted?: string[]): boolean {
-  const norm = (s: string) =>
-    s
-      .trim()
-      .toLowerCase()
-      .replace(/[’´`]/g, "'")
-      .replace(/\s+/g, " ")
-      .replace(/[.!?]+$/, "")
-      .trim();
-  const u = norm(user);
-  if (!u) return false;
-  if (u === norm(answer)) return true;
-  return (accepted ?? []).some((a) => norm(a) === u);
+function withBold(text: string) {
+  return text
+    .split(/(\*\*[^*]+\*\*)/g)
+    .map((part, i) =>
+      part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
+        <strong key={i} className="font-semibold">
+          {part.slice(2, -2)}
+        </strong>
+      ) : (
+        part
+      ),
+    );
 }
 
 function scoreQuiz(
@@ -391,7 +391,7 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
         <Panel key={block.heading}>
           <h2 className="font-display text-2xl font-bold text-ink">{block.heading}</h2>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink/75">
-            {block.body}
+            {withBold(block.body)}
           </p>
         </Panel>
       ))}
@@ -1007,7 +1007,7 @@ function QuizCard({
       {disabled && ok !== undefined && (
         <p className={cn("mt-3 text-sm", ok ? "text-ward" : "text-pulse")}>
           {ok ? "Correct. " : "Not quite. "}
-          {q.explanation}
+          {withBold(q.explanation)}
           {q.type === "gap" && !ok ? (
             <span className="block text-ink/55">Expected: {q.answer}</span>
           ) : null}

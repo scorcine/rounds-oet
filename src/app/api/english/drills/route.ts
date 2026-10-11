@@ -99,7 +99,7 @@ Return ONLY valid JSON:
 Rules:
 - Mix about half "mcq" (exactly 4 options) and half "gap" (one short answer, 1–4 words).
 - mcq: exactly ONE option is correct English; the other three must be clearly wrong (not just less natural). Vary where the correct option appears.
-- gap: the prompt must contain "___" and the answer must fit it exactly so the full sentence is correct. Any hint in brackets must describe the answer truthfully (e.g. don't say "noun" for a verb, don't say "-ing" unless the answer ends in -ing). List other correct forms (contractions, capitalisation) in acceptedAnswers.
+- gap: the prompt must contain "___" and the answer must fit it exactly so the full sentence is correct. Any hint in brackets must describe the answer truthfully (e.g. don't say "noun" for a verb, don't say "-ing" unless the answer ends in -ing). List other correct forms (contractions, capitalisation) in acceptedAnswers. If the gap could correctly take more than one form (affirmative or negative, singular or plural, question or statement), the brackets MUST say which one is required, e.g. "(negative)", "(plural question)".
 - Vary the task: translation from Portuguese, fill the gap, choose the correct form, fix the mistake, put words in order, pick the best reply in a short dialogue.
 - Include common Portuguese-speaker traps where relevant (literal translations, missing articles, "have" for age, etc.).
 - Keep vocabulary at ${lesson.level}. Explanations: one short, simple sentence in English that says why the answer is right.
