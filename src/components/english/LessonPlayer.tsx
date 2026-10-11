@@ -23,7 +23,14 @@ import { cn, countWords } from "@/lib/utils";
 import { diffWords } from "@/lib/text-diff";
 
 function answersMatch(user: string, answer: string, accepted?: string[]): boolean {
-  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const norm = (s: string) =>
+    s
+      .trim()
+      .toLowerCase()
+      .replace(/[’´`]/g, "'")
+      .replace(/\s+/g, " ")
+      .replace(/[.!?]+$/, "")
+      .trim();
   const u = norm(user);
   if (!u) return false;
   if (u === norm(answer)) return true;
@@ -66,8 +73,10 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
   const [recUrl, setRecUrl] = useState<string | null>(null);
   const [listeningLine, setListeningLine] = useState<string | null>(null);
   const [pronunciation, setPronunciation] = useState<Record<string, PronunciationResult>>({});
-  const [drillAnswers, setDrillAnswers] = useState<Record<string, string>>({});
-  const [drillSubmitted, setDrillSubmitted] = useState(false);
+  const [extraDrills, setExtraDrills] = useState<EnglishQuizItem[][]>([]);
+  const [drillLoading, setDrillLoading] = useState(false);
+  const [drillError, setDrillError] = useState<string | null>(null);
+  const lessonIdRef = useRef(lesson.id);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -88,8 +97,10 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
     setRecording(false);
     setListeningLine(null);
     setPronunciation({});
-    setDrillAnswers({});
-    setDrillSubmitted(false);
+    lessonIdRef.current = lesson.id;
+    setExtraDrills([]);
+    setDrillLoading(false);
+    setDrillError(null);
     setRecUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
@@ -123,10 +134,31 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
     return scoreQuiz(listenQs, listenAnswers);
   }, [listenSubmitted, listenAnswers, listenQs]);
 
-  const drillResult = useMemo(() => {
-    if (!drillSubmitted || !drills.length) return null;
-    return scoreQuiz(drills, drillAnswers);
-  }, [drillSubmitted, drillAnswers, drills]);
+  const drillRounds = drills.length ? [drills, ...extraDrills] : [];
+
+  async function loadNewDrills() {
+    const lessonId = lesson.id;
+    setDrillLoading(true);
+    setDrillError(null);
+    try {
+      const avoid = [...lesson.quiz, ...drillRounds.flat()].map((q) => q.prompt);
+      const res = await fetch("/api/english/drills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonId, avoid, round: Date.now() }),
+      });
+      const data = (await res.json()) as { items?: EnglishQuizItem[] };
+      if (lessonIdRef.current !== lessonId) return;
+      if (!res.ok || !data.items?.length) throw new Error("no items");
+      setExtraDrills((prev) => [...prev, data.items!]);
+    } catch {
+      if (lessonIdRef.current === lessonId) {
+        setDrillError("Could not create new questions right now. Please try again.");
+      }
+    } finally {
+      if (lessonIdRef.current === lessonId) setDrillLoading(false);
+    }
+  }
 
   const bestPronunciation = useMemo(() => {
     const scores = Object.values(pronunciation).map((p) => p.scorePercent);
@@ -796,49 +828,122 @@ export function EnglishLessonPlayer({ lesson }: { lesson: EnglishLesson }) {
                 Optional harder drills for more study hours — does not block lesson completion.
               </p>
             </div>
-            <p className="text-xs text-ink/45">{drills.length} questions</p>
+            <p className="text-xs text-ink/45">
+              {drillRounds.length > 1 ? `${drillRounds.length} rounds` : `${drills.length} questions`}
+            </p>
           </div>
-          {drills.map((q, i) => (
-            <QuizCard
-              key={q.id}
-              index={i}
-              q={q}
-              value={drillAnswers[q.id] ?? ""}
-              disabled={drillSubmitted}
-              ok={drillResult?.detail[q.id]}
-              onChange={(v) => setDrillAnswers((a) => ({ ...a, [q.id]: v }))}
+          {drillRounds.map((items, r) => (
+            <DrillRound
+              key={`${lesson.id}-${r}`}
+              round={r}
+              items={items}
+              isLast={r === drillRounds.length - 1}
+              loading={drillLoading}
+              error={drillError}
+              onMore={loadNewDrills}
             />
           ))}
-          {!drillSubmitted ? (
-            <button
-              type="button"
-              onClick={() => setDrillSubmitted(true)}
-              className="rounded-md bg-ink px-5 py-2.5 text-sm font-semibold text-paper"
-            >
-              Check drills
-            </button>
-          ) : (
-            drillResult && (
-              <Panel className="bg-scrub/50">
-                <p className="font-display text-3xl text-ink">{drillResult.scorePercent}%</p>
-                <p className="mt-1 text-sm text-ink/65">
-                  {drillResult.correct} of {drills.length} drill questions correct
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDrillAnswers({});
-                    setDrillSubmitted(false);
-                  }}
-                  className="mt-3 rounded-md border border-ink/15 px-4 py-2 text-sm font-semibold text-ink"
-                >
-                  Retry drills
-                </button>
-              </Panel>
-            )
-          )}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function DrillRound({
+  round,
+  items,
+  isLast,
+  loading,
+  error,
+  onMore,
+}: {
+  round: number;
+  items: EnglishQuizItem[];
+  isLast: boolean;
+  loading: boolean;
+  error: string | null;
+  onMore: () => void;
+}) {
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const result = useMemo(
+    () => (submitted ? scoreQuiz(items, answers) : null),
+    [submitted, items, answers],
+  );
+
+  useEffect(() => {
+    if (round > 0) rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [round]);
+
+  return (
+    <div ref={rootRef} className="space-y-4">
+      {round > 0 ? (
+        <div className="flex items-end justify-between gap-2 border-t border-dashed border-ink/15 pt-6">
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-ward">
+            New round {round + 1}
+          </p>
+          <p className="text-xs text-ink/45">{items.length} new questions</p>
+        </div>
+      ) : null}
+      {items.map((q, i) => (
+        <QuizCard
+          key={q.id}
+          index={i}
+          q={q}
+          value={answers[q.id] ?? ""}
+          disabled={submitted}
+          ok={result?.detail[q.id]}
+          onChange={(v) => setAnswers((a) => ({ ...a, [q.id]: v }))}
+        />
+      ))}
+      {!submitted ? (
+        <button
+          type="button"
+          onClick={() => setSubmitted(true)}
+          className="rounded-md bg-ink px-5 py-2.5 text-sm font-semibold text-paper"
+        >
+          Check drills
+        </button>
+      ) : (
+        result && (
+          <Panel className="bg-scrub/50">
+            <p className="font-display text-3xl text-ink">{result.scorePercent}%</p>
+            <p className="mt-1 text-sm text-ink/65">
+              {result.correct} of {items.length} drill questions correct
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {isLast ? (
+                <button
+                  type="button"
+                  onClick={onMore}
+                  disabled={loading}
+                  className="rounded-md bg-ward px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+                >
+                  {loading ? "Creating new questions…" : "New questions →"}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  setAnswers({});
+                  setSubmitted(false);
+                }}
+                className="rounded-md border border-ink/15 px-4 py-2 text-sm font-semibold text-ink"
+              >
+                Retry these
+              </button>
+            </div>
+            {isLast && error ? <p className="mt-2 text-sm text-pulse">{error}</p> : null}
+            {isLast && !error ? (
+              <p className="mt-2 text-xs text-ink/50">
+                New questions practise the same grammar with different sentences, so you learn the
+                rule instead of memorising answers.
+              </p>
+            ) : null}
+          </Panel>
+        )
+      )}
     </div>
   );
 }
